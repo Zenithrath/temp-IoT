@@ -18,13 +18,13 @@
 // ============================================
 // KONFIGURASI - ISI BAGIAN INI SAJA
 // ============================================
-const char* WIFI_SSID = "NamaWiFiKamu";        // ← ganti
-const char* WIFI_PASS = "PasswordWiFiKamu";     // ← ganti
-const char* API_URL   = "https://namamu.vercel.app/api/device";  // ← ganti URL deployment
-const char* API_KEY   = "your-secret-key";       // ← ganti, samakan dengan IOT_API_KEY di .env.local
-const char* DEVICE_ID = "device-uuid";           // ← ganti, ambil dari Settings → Add Device
+const char* WIFI_SSID = "HQ_Mesh";        // ← ganti
+const char* WIFI_PASS = "##ARKA##4321##";     // ← ganti
+const char* API_URL   = "https://arka-mt.vercel.app/api/device/";  // ← trailing slash WAJIB
+const char* API_KEY   = "apiku_gacor";       // ← samakan dengan IOT_API_KEY di Vercel
+const char* DEVICE_ID = "a09c1032-b196-40f1-8e52-066035b09dc1";           // ← dari Settings
 
-#define DHTPIN 4        // GPIO pin DHT11 DATA
+#define DHTPIN 23        // GPIO pin DHT11 DATA
 #define DHTTYPE DHT11
 #define SEND_INTERVAL 5000  // interval kirim data (ms) = 5 detik
 // ============================================
@@ -97,6 +97,7 @@ void sendToServer(float temp, float hum) {
   http.begin(API_URL);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("x-api-key", API_KEY);
+  http.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
 
   // Build JSON manually (tanpa ArduinoJson library)
   String json = "{";

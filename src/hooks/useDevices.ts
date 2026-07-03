@@ -1,91 +1,202 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import createSupabaseClientClient from '@/lib/supabase/client';
 
 export interface DeviceData {
   id: string;
   name: string;
+  location: string | null;
   temperature: number;
   humidity: number;
   tempChange: number;
   humChange: number;
-  history: { temp: number; hum: number }[];
+  history: { temp: number; hum: number; created_at?: string }[];
 }
 
-const defaultDevices: DeviceData[] = [
-  {
-    id: "station-1",
-    name: "Station #1 — Garden",
-    temperature: 28.5,
-    humidity: 65,
-    tempChange: 2.3,
-    humChange: -1.2,
-    history: [
-      { temp: 26.2, hum: 58 }, { temp: 27.1, hum: 60 }, { temp: 28.0, hum: 62 },
-      { temp: 28.8, hum: 64 }, { temp: 29.2, hum: 66 }, { temp: 28.7, hum: 65 }, { temp: 28.5, hum: 65 },
-    ],
-  },
-  {
-    id: "station-2",
-    name: "Station #2 — Living Room",
-    temperature: 22.1,
-    humidity: 52,
-    tempChange: -0.8,
-    humChange: 3.5,
-    history: [
-      { temp: 23.0, hum: 48 }, { temp: 22.8, hum: 49 }, { temp: 22.5, hum: 50 },
-      { temp: 22.2, hum: 51 }, { temp: 22.0, hum: 52 }, { temp: 22.1, hum: 52 }, { temp: 22.1, hum: 52 },
-    ],
-  },
-  {
-    id: "station-3",
-    name: "Station #3 — Rooftop",
-    temperature: 31.4,
-    humidity: 45,
-    tempChange: 4.1,
-    humChange: -3.8,
-    history: [
-      { temp: 28.5, hum: 55 }, { temp: 29.2, hum: 52 }, { temp: 30.1, hum: 50 },
-      { temp: 30.8, hum: 48 }, { temp: 31.5, hum: 46 }, { temp: 31.2, hum: 45 }, { temp: 31.4, hum: 45 },
-    ],
-  },
-];
+function mapRowsToDevice(
+  device: { id: string; name: string; location: string | null },
+  history: { id: string; device_id: string; temperature: number; humidity: number; created_at: string }[]
+): DeviceData {
+  const deviceHistory = history
+    .filter((h) => h.device_id === device.id)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  const latestReading = deviceHistory[deviceHistory.length - 1];
+  const previousReading = deviceHistory[deviceHistory.length - 2];
+
+  const temperature = latestReading?.temperature ?? 0;
+  const humidity = latestReading?.humidity ?? 0;
+
+  const tempChange =
+    latestReading && previousReading
+      ? parseFloat(
+          (
+            ((latestReading.temperature - previousReading.temperature) /
+              (previousReading.temperature || 1)) *
+            100
+          ).toFixed(1)
+        )
+      : 0;
+
+  const humChange =
+    latestReading && previousReading
+      ? parseFloat(
+          (
+            ((latestReading.humidity - previousReading.humidity) /
+              (previousReading.humidity || 1)) *
+            100
+          ).toFixed(1)
+        )
+      : 0;
+
+  return {
+    id: device.id,
+    name: device.name,
+    location: device.location,
+    temperature,
+    humidity,
+    tempChange,
+    humChange,
+    history: deviceHistory.map((h) => ({
+      temp: h.temperature,
+      hum: h.humidity,
+      created_at: h.created_at,
+    })),
+  };
+}
 
 export function useDevices() {
   const [devices, setDevices] = useState<DeviceData[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("arkananta_devices");
-    if (stored) {
-      try {
-        setDevices(JSON.parse(stored));
-      } catch (e) {
-        setDevices(defaultDevices);
-        localStorage.setItem("arkananta_devices", JSON.stringify(defaultDevices));
-      }
-    } else {
-      setDevices(defaultDevices);
-      localStorage.setItem("arkananta_devices", JSON.stringify(defaultDevices));
+  const fetchDevices = useCallback(async () => {
+    const supabase = createSupabaseClientClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setDevices([]);
+      setLoaded(true);
+      return;
     }
+
+    const { data: deviceRows, error: devErr } = await supabase
+      .from('devices')
+      .select('id, name, location')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true });
+
+    if (devErr) {
+      console.error('[useDevices] Failed to fetch devices:', devErr.message);
+      setError(devErr.message);
+      setLoaded(true);
+      return;
+    }
+
+    if (!deviceRows || deviceRows.length === 0) {
+      setDevices([]);
+      setLoaded(true);
+      return;
+    }
+
+    const deviceIds = deviceRows.map((d) => d.id);
+
+    const { data: historyRows, error: histErr } = await supabase
+      .from('device_history')
+      .select('id, device_id, temperature, humidity, created_at')
+      .in('device_id', deviceIds)
+      .order('created_at', { ascending: false })
+      .limit(50 * deviceIds.length);
+
+    if (histErr) {
+      console.error('[useDevices] Failed to fetch history:', histErr.message);
+      setError(histErr.message);
+      setLoaded(true);
+      return;
+    }
+
+    const mapped = deviceRows.map((d) => mapRowsToDevice(d, historyRows ?? []));
+    setDevices(mapped);
     setLoaded(true);
   }, []);
 
-  const saveDevices = (newDevices: DeviceData[]) => {
-    setDevices(newDevices);
-    localStorage.setItem("arkananta_devices", JSON.stringify(newDevices));
-    // Dispatch a custom event to notify other tabs/components
-    window.dispatchEvent(new Event("devices_updated"));
-  };
-
   useEffect(() => {
-    const handleUpdate = () => {
-      const stored = localStorage.getItem("arkananta_devices");
-      if (stored) {
-        setDevices(JSON.parse(stored));
-      }
-    };
-    window.addEventListener("devices_updated", handleUpdate);
-    return () => window.removeEventListener("devices_updated", handleUpdate);
-  }, []);
+    fetchDevices();
+  }, [fetchDevices]);
 
-  return { devices, saveDevices, loaded };
+  // Realtime: Listen for new sensor readings and re-fetch when they arrive
+  useEffect(() => {
+    const supabase = createSupabaseClientClient();
+
+    const channel = supabase
+      .channel('device_history_realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'device_history' },
+        () => {
+          fetchDevices();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'devices' },
+        () => {
+          fetchDevices();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchDevices]);
+
+  // Add a new device to Supabase
+  const addDevice = useCallback(
+    async (name: string, location: string) => {
+      const supabase = createSupabaseClientClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: 'Not authenticated' };
+
+      const { error } = await supabase.from('devices').insert({ name, location, user_id: user.id });
+      if (error) {
+        console.error('[useDevices] addDevice error:', error.message);
+        return { error: error.message };
+      }
+      await fetchDevices();
+      return { error: null };
+    },
+    [fetchDevices]
+  );
+
+  // Update a device in Supabase
+  const updateDevice = useCallback(
+    async (id: string, name: string, location: string) => {
+      const supabase = createSupabaseClientClient();
+      const { error } = await supabase.from('devices').update({ name, location }).eq('id', id);
+      if (error) {
+        console.error('[useDevices] updateDevice error:', error.message);
+        return { error: error.message };
+      }
+      await fetchDevices();
+      return { error: null };
+    },
+    [fetchDevices]
+  );
+
+  // Delete a device from Supabase
+  const deleteDevice = useCallback(
+    async (id: string) => {
+      const supabase = createSupabaseClientClient();
+      const { error } = await supabase.from('devices').delete().eq('id', id);
+      if (error) {
+        console.error('[useDevices] deleteDevice error:', error.message);
+        return { error: error.message };
+      }
+      await fetchDevices();
+      return { error: null };
+    },
+    [fetchDevices]
+  );
+
+  return { devices, loaded, error, addDevice, updateDevice, deleteDevice };
 }

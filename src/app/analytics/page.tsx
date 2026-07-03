@@ -12,68 +12,16 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { TrendingUp, TrendingDown, Calendar, ArrowUpRight } from "lucide-react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
 type Period = "weekly" | "biweekly" | "monthly";
 
-const mockData: Record<Period, { 
-  labels: string[]; 
-  temp: number[]; 
-  hum: number[]; 
-  avgTemp: number; 
-  avgHum: number; 
-  minTemp: number; 
-  maxTemp: number; 
-  minHum: number; 
-  maxHum: number; 
-  tempChange: number; 
-  humChange: number; 
-}> = {
-  weekly: {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    temp: [26.2, 27.1, 28.0, 28.8, 29.2, 28.7, 28.5],
-    hum: [58, 60, 62, 64, 66, 65, 65],
-    avgTemp: 28.1,
-    avgHum: 62.9,
-    minTemp: 26.2,
-    maxTemp: 29.2,
-    minHum: 58,
-    maxHum: 66,
-    tempChange: 2.3,
-    humChange: -1.2,
-  },
-  biweekly: {
-    labels: ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12", "W13", "W14"],
-    temp: [25.0, 25.5, 26.2, 27.1, 28.0, 28.8, 29.2, 28.7, 28.5, 27.8, 26.5, 27.0, 28.2, 28.5],
-    hum: [55, 56, 58, 60, 62, 64, 66, 65, 65, 63, 61, 62, 64, 65],
-    avgTemp: 27.4,
-    avgHum: 61.6,
-    minTemp: 25.0,
-    maxTemp: 29.2,
-    minHum: 55,
-    maxHum: 66,
-    tempChange: 3.1,
-    humChange: -0.8,
-  },
-  monthly: {
-    labels: ["W1", "W2", "W3", "W4"],
-    temp: [24.5, 26.8, 28.1, 28.5],
-    hum: [52, 58, 63, 65],
-    avgTemp: 27.0,
-    avgHum: 59.5,
-    minTemp: 24.5,
-    maxTemp: 28.5,
-    minHum: 52,
-    maxHum: 65,
-    tempChange: 4.2,
-    humChange: -2.1,
-  },
-};
-
 export default function AnalyticsPage() {
   const [period, setPeriod] = useState<Period>("weekly");
-  const data = mockData[period];
+  const { data: analyticsData, loaded, error } = useAnalytics();
+  const data = analyticsData[period];
 
   const tempChartData = {
     labels: data.labels,
@@ -134,6 +82,33 @@ export default function AnalyticsPage() {
     },
   };
 
+  if (!loaded) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-sm text-slate-500 font-semibold">Loading analytics data...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-center">
+            <p className="text-sm text-red-500 font-semibold">Failed to load analytics: {error}</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const hasData = data.labels.length > 0;
+
   return (
     <DashboardLayout>
       {/* Header Section */}
@@ -161,6 +136,14 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      {!hasData ? (
+        <div className="bg-background rounded-2xl p-12 border-none shadow-neu text-center">
+          <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+          <h3 className="font-bold text-slate-900 mb-2">No Data Yet</h3>
+          <p className="text-sm text-slate-400">Add some devices and start collecting telemetry data to see analytics.</p>
+        </div>
+      ) : (
+      <>
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Avg Temp */}
@@ -319,6 +302,8 @@ export default function AnalyticsPage() {
           </table>
         </div>
       </div>
+      </>
+      )}
     </DashboardLayout>
   );
 }

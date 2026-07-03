@@ -39,11 +39,23 @@ export default function Home() {
     }
   }, [loaded, devices, selectedDeviceId]);
 
-  if (!loaded || devices.length === 0) {
+  if (!loaded) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-[50vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (devices.length === 0) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-[50vh] gap-3">
+          <Cpu className="h-8 w-8 text-orange-300" />
+          <p className="text-sm font-semibold text-gray-500">No devices found.</p>
+          <p className="text-xs text-gray-400">Add devices and sensor history to your Supabase database to get started.</p>
         </div>
       </DashboardLayout>
     );
@@ -90,7 +102,7 @@ export default function Home() {
       </div>
 
       {/* Main Layout: 3D + Average Card */}
-      <div className="grid grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mb-5 flex-1">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 mb-5 flex-1">
         {/* 3D Model */}
         <div className="col-span-1 lg:col-span-7 flex">
           <div className="h-[180px] sm:h-[220px] lg:h-[300px] w-full relative rounded-2xl overflow-hidden bg-white shadow-neu">
@@ -127,7 +139,10 @@ export default function Home() {
                         }`}
                       >
                         <Cpu className={`h-3 w-3 ${d.id === selectedDeviceId ? "text-primary" : "text-gray-400"}`} />
-                        {d.name}
+                        <div className="flex flex-col">
+                          <span>{d.name}</span>
+                          {d.location && <span className="text-[9px] text-gray-400 font-normal">{d.location}</span>}
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -135,7 +150,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-3 mb-2 sm:mb-4">
+            <div className="grid grid-cols-2 gap-1.5 sm:gap-3 mb-2 sm:mb-4">
               <div className="bg-gray-50 shadow-neu-inset rounded-xl p-2 sm:p-3 flex flex-col items-center sm:items-start">
                 <div className="flex items-center gap-1 mb-0.5 sm:mb-1">
                   <Thermometer className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary" />

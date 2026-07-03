@@ -17,11 +17,12 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 export interface DeviceData {
   id: string
   name: string
+  location: string | null
   temperature: number
   humidity: number
   tempChange: number
   humChange: number
-  history: { temp: number; hum: number }[]
+  history: { temp: number; hum: number; created_at?: string }[]
 }
 
 interface DeviceCardProps {

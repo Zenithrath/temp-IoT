@@ -4,14 +4,15 @@
 
 @layer base {
   :root {
-    --background: 210 40% 96%; /* #f1f5f9 */
-    --foreground: 222 47% 11%;
+    /* Warm off-white/cream base */
+    --background: 40 33% 96%; /* #f9f6f0 */
+    --foreground: 24 10% 20%;
 
-    --card: 210 40% 96%; /* Same as background for skeuomorphism */
-    --card-foreground: 222 47% 11%;
+    --card: 40 33% 96%;
+    --card-foreground: 24 10% 20%;
 
-    --popover: 210 40% 96%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 40 33% 96%;
+    --popover-foreground: 24 10% 20%;
 
     --primary: 24 90% 53%; /* Orange #f06a25 */
     --primary-foreground: 0 0% 100%;
@@ -47,15 +48,15 @@
 
 @layer utilities {
   .shadow-neu {
-    box-shadow: 6px 6px 14px rgba(240, 106, 37, 0.08), -6px -6px 14px #ffffff;
+    box-shadow: 6px 6px 14px rgba(210, 195, 180, 0.6), -6px -6px 14px #ffffff;
   }
   .shadow-neu-sm {
-    box-shadow: 4px 4px 10px rgba(240, 106, 37, 0.06), -4px -4px 10px #ffffff;
+    box-shadow: 4px 4px 10px rgba(210, 195, 180, 0.5), -4px -4px 10px #ffffff;
   }
   .shadow-neu-inset {
-    box-shadow: inset 4px 4px 8px rgba(240, 106, 37, 0.06), inset -4px -4px 8px #ffffff;
+    box-shadow: inset 4px 4px 8px rgba(210, 195, 180, 0.5), inset -4px -4px 8px #ffffff;
   }
   .shadow-neu-active {
-    box-shadow: inset 2px 2px 5px rgba(240, 106, 37, 0.08), inset -2px -2px 5px #ffffff;
+    box-shadow: inset 2px 2px 5px rgba(210, 195, 180, 0.6), inset -2px -2px 5px #ffffff;
   }
 }

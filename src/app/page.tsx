@@ -8,9 +8,9 @@ import dynamic from "next/dynamic";
 const SplineComponent = dynamic(() => import("@/components/SplineComponent"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-cream-200/20 rounded-xl border border-cream-200/50">
+    <div className="w-full h-full flex items-center justify-center bg-orange-50/30 rounded-xl border border-orange-100/50">
       <div className="flex flex-col items-center gap-2">
-        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Loading...</span>
       </div>
     </div>
@@ -43,7 +43,7 @@ export default function Home() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-[50vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
         </div>
       </DashboardLayout>
     );
@@ -73,16 +73,16 @@ export default function Home() {
 
         {/* Quick stats pills */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-background shadow-neu-sm px-2.5 py-1.5 rounded-lg border border-transparent">
+          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg shadow-neu-sm">
             <Cpu className="h-3 w-3 text-primary" />
             <span className="text-[10px] font-bold text-gray-700">{totalDevices}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
           </div>
-          <div className="flex items-center gap-1.5 bg-background shadow-neu-sm px-2.5 py-1.5 rounded-lg border border-transparent hidden sm:flex">
+          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg shadow-neu-sm hidden sm:flex">
             <Thermometer className="h-3 w-3 text-primary" />
             <span className="text-[10px] font-bold text-gray-700">{avgTempAll.toFixed(1)}°C</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-background shadow-neu-sm px-2.5 py-1.5 rounded-lg border border-transparent hidden sm:flex">
+          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg shadow-neu-sm hidden sm:flex">
             <Droplets className="h-3 w-3 text-primary" />
             <span className="text-[10px] font-bold text-gray-700">{avgHumAll.toFixed(0)}%</span>
           </div>
@@ -93,9 +93,9 @@ export default function Home() {
       <div className="grid grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mb-5 flex-1">
         {/* 3D Model */}
         <div className="col-span-1 lg:col-span-7 flex">
-          <div className="h-[180px] sm:h-[220px] lg:h-[300px] w-full relative rounded-2xl overflow-hidden bg-background shadow-neu border-none">
+          <div className="h-[180px] sm:h-[220px] lg:h-[300px] w-full relative rounded-2xl overflow-hidden bg-white shadow-neu">
             <SplineComponent />
-            <div className="absolute top-3 left-3 bg-white/70 backdrop-blur-md px-2 py-1 rounded-lg border border-cream-200/50 text-[9px] font-bold text-gray-500 flex items-center gap-1.5 pointer-events-none">
+            <div className="absolute top-3 left-3 bg-white/80 backdrop-blur-md px-2 py-1 rounded-lg shadow-neu-sm text-[9px] font-bold text-gray-500 flex items-center gap-1.5 pointer-events-none">
               <Activity className="h-2.5 w-2.5 text-primary animate-pulse" />
               3D View
             </div>
@@ -104,26 +104,26 @@ export default function Home() {
 
         {/* Average Card */}
         <div className="col-span-1 lg:col-span-5 flex flex-col">
-          <div className="bg-background rounded-2xl p-3 sm:p-5 border-none shadow-neu flex-1 flex flex-col justify-between h-[180px] sm:h-[220px] lg:h-[300px]">
+          <div className="bg-white rounded-2xl p-3 sm:p-5 shadow-neu flex-1 flex flex-col justify-between h-[180px] sm:h-[220px] lg:h-[300px]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 sm:mb-3 gap-1">
               <h3 className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">Device Stats</h3>
               <div className="relative">
                 <button 
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-1 bg-background shadow-neu-sm hover:shadow-neu-inset px-1.5 sm:px-2 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold text-slate-600 transition-all border-none"
+                  className="flex items-center gap-1 bg-white shadow-neu-sm hover:shadow-neu-active px-1.5 sm:px-2 py-1 rounded-lg text-[9px] sm:text-[10px] font-bold text-slate-600 transition-all"
                 >
                   <Cpu className="h-3 w-3 text-primary" />
                   <span className="max-w-[70px] truncate">{selectedDevice.name}</span>
                   <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {dropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-background rounded-xl shadow-neu border-none py-1 z-50">
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-neu py-1 z-50">
                     {devices.map((d) => (
                       <button
                         key={d.id}
                         onClick={() => { setSelectedDeviceId(d.id); setDropdownOpen(false); }}
                         className={`w-full text-left px-3 py-1.5 text-[10px] font-semibold flex items-center gap-2 ${
-                          d.id === selectedDeviceId ? "text-primary bg-primary/5" : "text-gray-600 hover:bg-cream-50"
+                          d.id === selectedDeviceId ? "text-primary bg-primary/5" : "text-gray-600 hover:bg-orange-50"
                         }`}
                       >
                         <Cpu className={`h-3 w-3 ${d.id === selectedDeviceId ? "text-primary" : "text-gray-400"}`} />
@@ -136,7 +136,7 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-3 mb-2 sm:mb-4">
-              <div className="bg-background shadow-neu-inset rounded-xl p-2 sm:p-3 border-none flex flex-col items-center sm:items-start">
+              <div className="bg-gray-50 shadow-neu-inset rounded-xl p-2 sm:p-3 flex flex-col items-center sm:items-start">
                 <div className="flex items-center gap-1 mb-0.5 sm:mb-1">
                   <Thermometer className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary" />
                   <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">Avg Temp</span>
@@ -146,7 +146,7 @@ export default function Home() {
                   <span className="text-[8px] sm:text-[10px] font-semibold text-slate-400 ml-0.5">°C</span>
                 </div>
               </div>
-              <div className="bg-background shadow-neu-inset rounded-xl p-2 sm:p-3 border-none flex flex-col items-center sm:items-start">
+              <div className="bg-gray-50 shadow-neu-inset rounded-xl p-2 sm:p-3 flex flex-col items-center sm:items-start">
                 <div className="flex items-center gap-1 mb-0.5 sm:mb-1">
                   <Droplets className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-500" />
                   <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">Avg Hum</span>
@@ -163,9 +163,9 @@ export default function Home() {
                 <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">Range</span>
                 <span className="text-[8px] sm:text-[9px] font-bold text-slate-500">{minTemp.toFixed(1)}°C — {maxTemp.toFixed(1)}°C</span>
               </div>
-              <div className="bg-background shadow-neu-inset rounded-full h-2 w-full overflow-hidden p-0.5">
+              <div className="bg-gray-100 shadow-neu-inset rounded-full h-2 w-full overflow-hidden p-0.5">
                 <div 
-                  className="bg-primary shadow-neu h-full rounded-full"
+                  className="bg-gradient-to-r from-orange-400 to-orange-500 h-full rounded-full shadow-sm"
                   style={{ width: `${((avgTemp - minTemp) / (maxTemp - minTemp)) * 100}%` }}
                 />
               </div>

@@ -98,7 +98,7 @@ export function DeviceCard({ device }: DeviceCardProps) {
   }
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl p-2.5 sm:p-4 h-full transition-all duration-300 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1),0_12px_24px_-4px_rgba(0,0,0,0.06)] group">
+    <div className="flex flex-col bg-white rounded-2xl p-2.5 sm:p-4 h-full transition-all duration-300 shadow-[0_2px_15px_-3px_rgba(240,106,37,0.07),0_10px_20px_-2px_rgba(240,106,37,0.04)] hover:shadow-[0_4px_20px_-4px_rgba(240,106,37,0.12),0_12px_24px_-4px_rgba(240,106,37,0.06)] group">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1 sm:gap-2 bg-gray-50 px-2 py-1.5 rounded-lg">
           <Cpu className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary" />

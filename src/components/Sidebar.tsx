@@ -38,7 +38,7 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside 
       className={cn(
-        "flex flex-col h-screen bg-cream-200/50 border-r border-cream-300/40 justify-between shrink-0 transition-all duration-300 ease-in-out",
+        "flex flex-col h-screen bg-orange-50/30 border-r border-orange-100/50 justify-between shrink-0 transition-all duration-300 ease-in-out",
         collapsed ? "w-[72px] p-3" : "w-64 p-6",
         className
       )}
@@ -134,7 +134,7 @@ export function MobileNav() {
   );
   
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-background border-b border-slate-200/50 md:hidden sticky top-0 z-40">
+    <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-orange-100/50 md:hidden sticky top-0 z-40">
       <Link href="/" className="flex items-center gap-2">
         <div className="rounded-lg overflow-hidden flex items-center justify-center h-6 w-6">
           <Image src="/arka.jpg" alt="Arka Logo" width={24} height={24} className="object-cover" />
@@ -152,7 +152,7 @@ export function MobileNav() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent className="p-0 w-64 bg-cream-100 border-r border-cream-200">
+          <SheetContent className="p-0 w-64 bg-orange-50/50 border-r border-orange-100">
             <div className="flex flex-col h-full justify-between p-6">
               <div className="flex flex-col gap-8">
                 {/* Brand */}

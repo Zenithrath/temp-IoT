@@ -4,36 +4,36 @@
 
 @layer base {
   :root {
-    /* Warm off-white/cream base */
-    --background: 40 33% 96%; /* #f9f6f0 */
+    /* Warm off-white/cream base - Taste Skill reference */
+    --background: 40 18% 96%;
     --foreground: 24 10% 20%;
 
-    --card: 40 33% 96%;
+    --card: 40 10% 99%;
     --card-foreground: 24 10% 20%;
 
-    --popover: 40 33% 96%;
+    --popover: 40 10% 99%;
     --popover-foreground: 24 10% 20%;
 
-    --primary: 24 90% 53%; /* Orange #f06a25 */
+    --primary: 24 82% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 32% 91%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 30 12% 93%;
+    --secondary-foreground: 24 15% 20%;
 
-    --muted: 214 32% 91%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 30 12% 93%;
+    --muted-foreground: 24 10% 42%;
 
-    --accent: 24 90% 53%;
+    --accent: 24 82% 58%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 60% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 24 90% 53%;
+    --border: 30 15% 90%;
+    --input: 30 15% 90%;
+    --ring: 24 82% 58%;
 
-    --radius: 1.25rem;
+    --radius: 1rem;
   }
 }
 
@@ -47,16 +47,13 @@
 }
 
 @layer utilities {
-  .shadow-neu {
-    box-shadow: 6px 6px 14px rgba(210, 195, 180, 0.6), -6px -6px 14px #ffffff;
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
   }
-  .shadow-neu-sm {
-    box-shadow: 4px 4px 10px rgba(210, 195, 180, 0.5), -4px -4px 10px #ffffff;
+  .shadow-card-hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
   }
-  .shadow-neu-inset {
-    box-shadow: inset 4px 4px 8px rgba(210, 195, 180, 0.5), inset -4px -4px 8px #ffffff;
-  }
-  .shadow-neu-active {
-    box-shadow: inset 2px 2px 5px rgba(210, 195, 180, 0.6), inset -2px -2px 5px #ffffff;
+  .shadow-card-elevated {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
   }
 }

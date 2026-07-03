@@ -123,6 +123,14 @@ export function useDevices() {
     fetchDevices();
   }, [fetchDevices]);
 
+  // Polling fallback: refresh data every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchDevices();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchDevices]);
+
   // Realtime: Listen for new sensor readings and re-fetch when they arrive
   useEffect(() => {
     const supabase = createSupabaseClientClient();

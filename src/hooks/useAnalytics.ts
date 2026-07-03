@@ -210,6 +210,14 @@ export function useAnalytics() {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
+  // Polling fallback: refresh analytics every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAnalytics();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchAnalytics]);
+
   useEffect(() => {
     const supabase = createSupabaseClientClient();
 

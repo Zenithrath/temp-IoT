@@ -53,7 +53,7 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
         cream: {
-          50: "#faf8f5",
+          50: "#f8f4ed",
           100: "#f5f0e8",
           200: "#ede5d8",
           300: "#ddd0be",

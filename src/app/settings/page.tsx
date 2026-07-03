@@ -124,7 +124,7 @@ export default function SettingsPage() {
 
         {/* Right Card: Device Management (Span 7) */}
         <div className="lg:col-span-7 flex flex-col gap-6">
-          <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-neu">
+          <div className="bg-white rounded-2xl p-6 border border-gray-200/60 shadow-card">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="font-bold text-slate-900">Device Management</h3>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => { setEditingDevice(null); setShowForm(true); }}
-                className="flex items-center gap-1.5 bg-primary text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/90 transition-colors shadow-neu-sm"
+                className="flex items-center gap-1.5 bg-primary text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/90 transition-colors shadow-card"
               >
                 <Plus className="h-4 w-4" />
                 Add Device

@@ -28,11 +28,11 @@ export default function AnalyticsPage() {
     datasets: [
       {
         data: data.temp,
-        borderColor: "#f06a25", // Terracotta orange
-        backgroundColor: "rgba(240, 106, 37, 0.04)",
+        borderColor: "#e8772e", // Vibrant orange
+        backgroundColor: "rgba(232, 119, 46, 0.04)",
         borderWidth: 2.5,
         pointRadius: 4,
-        pointBackgroundColor: "#f06a25",
+        pointBackgroundColor: "#e8772e",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
         tension: 0.4,
@@ -119,14 +119,14 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Period Selector styled like Lumos tabs */}
-        <div className="flex items-center gap-1 bg-background shadow-neu-inset p-1.5 rounded-2xl border-none w-fit">
+        <div className="flex items-center gap-1 bg-background p-1.5 rounded-2xl border-none w-fit">
           {(["weekly", "biweekly", "monthly"] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${
                 period === p
-                  ? "bg-primary text-white shadow-neu-sm border border-transparent"
+                  ? "bg-primary text-white shadow-card border border-transparent"
                   : "text-slate-500 hover:text-slate-900"
               }`}
             >
@@ -137,7 +137,7 @@ export default function AnalyticsPage() {
       </div>
 
       {!hasData ? (
-        <div className="bg-background rounded-2xl p-12 border-none shadow-neu text-center">
+        <div className="bg-background rounded-2xl p-12 border border-gray-200/60 shadow-card text-center">
           <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-4" />
           <h3 className="font-bold text-slate-900 mb-2">No Data Yet</h3>
           <p className="text-sm text-slate-400">Add some devices and start collecting telemetry data to see analytics.</p>
@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Avg Temp */}
-        <div className="bg-background rounded-2xl p-6 border-none shadow-neu hover:shadow-neu-sm transition-all duration-300">
+        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Avg Temperature</span>
           <div className="flex items-baseline gap-1.5 mt-1">
             <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{data.avgTemp}</span>
@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Avg Hum */}
-        <div className="bg-background rounded-2xl p-6 border-none shadow-neu hover:shadow-neu-sm transition-all duration-300">
+        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Avg Humidity</span>
           <div className="flex items-baseline gap-1.5 mt-1">
             <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{data.avgHum}</span>
@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Temp Range */}
-        <div className="bg-background rounded-2xl p-6 border-none shadow-neu hover:shadow-neu-sm transition-all duration-300">
+        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Temp Range</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums">{data.minTemp}</span>
@@ -205,7 +205,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Humidity Range */}
-        <div className="bg-background rounded-2xl p-6 border-none shadow-neu hover:shadow-neu-sm transition-all duration-300">
+        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Humidity Range</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums">{data.minHum}</span>
@@ -220,7 +220,7 @@ export default function AnalyticsPage() {
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Temperature chart */}
-        <div className="bg-background rounded-2xl p-6 border-none shadow-neu hover:shadow-neu-sm transition-all duration-300">
+        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-slate-900">Temperature History</h3>
@@ -237,7 +237,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Humidity chart */}
-        <div className="bg-background rounded-2xl p-6 border-none shadow-neu hover:shadow-neu-sm transition-all duration-300">
+        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-slate-900">Humidity History</h3>
@@ -255,7 +255,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-background rounded-2xl p-6 border-none shadow-neu">
+      <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div>
             <h3 className="font-bold text-slate-900">Telemetry Data Log</h3>
@@ -273,7 +273,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
         
-        <div className="overflow-x-auto rounded-xl border border-slate-200/50 shadow-neu-inset">
+        <div className="overflow-x-auto rounded-xl border border-gray-200/60">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-100 text-slate-600 font-semibold">
               <tr>

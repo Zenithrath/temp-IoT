@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 96%; /* #f1f5f9 */
+    --foreground: 222 47% 11%;
+
+    --card: 210 40% 96%; /* Same as background for skeuomorphism */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 210 40% 96%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%; /* Bright Blue #1d4ed8 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 221 83% 53%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 1.25rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .shadow-neu {
+    box-shadow: 6px 6px 12px #c7d2fe, -6px -6px 12px #ffffff;
+  }
+  .shadow-neu-sm {
+    box-shadow: 4px 4px 8px #c7d2fe, -4px -4px 8px #ffffff;
+  }
+  .shadow-neu-inset {
+    box-shadow: inset 4px 4px 8px #c7d2fe, inset -4px -4px 8px #ffffff;
+  }
+  .shadow-neu-active {
+    box-shadow: inset 2px 2px 5px #c7d2fe, inset -2px -2px 5px #ffffff;
+  }
+}

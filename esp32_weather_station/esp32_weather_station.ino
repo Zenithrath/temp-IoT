@@ -97,7 +97,7 @@ void sendToServer(float temp, float hum) {
   http.begin(API_URL);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("x-api-key", API_KEY);
-  http.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
+  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
 
   // Build JSON manually (tanpa ArduinoJson library)
   String json = "{";

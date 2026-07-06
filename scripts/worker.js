@@ -15,12 +15,12 @@
 
 const mqtt = require("mqtt");
 
-const TB_HOST = process.env.TB_HOST || "localhost";
+const TB_HOST = process.env.TB_HOST || "mqtt.thingsboard.cloud";
 const TB_PORT = process.env.TB_PORT || "1883";
 const INTERVAL = parseFloat(process.env.INTERVAL || "5");
 
 const DEVICES = [
-  { name: "MT-021", token: process.env.TB_TOKEN_2 || "Io8CNkjZTgoWXf4c10Ra" },
+  { name: "MT-021", token: process.env.TB_TOKEN_2 || "Nt2h2OluS9F5iofYLpmu" },
 ];
 
 function simulateTemperature(elapsedHours) {

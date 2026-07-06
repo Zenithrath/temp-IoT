@@ -51,10 +51,9 @@ export default function RegisterForm() {
       const { error } = result;
 
       if (error?.message) {
-        console.log(error.message);
         toast({
           variant: "destructive",
-          title: "You submitted the following values:",
+          title: "Registration Failed",
           description: (
             <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
               <code className="text-white">{error.message}</code>
@@ -62,15 +61,7 @@ export default function RegisterForm() {
           ),
         });
       } else {
-        console.log("succes");
-        toast({
-          title: "You submitted the following values:",
-          description: (
-            <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-              <code className="text-white">Successfully register</code>
-            </pre>
-          ),
-        });
+        window.location.href = "/auth";
       }
     });
   }

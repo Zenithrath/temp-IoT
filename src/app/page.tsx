@@ -22,7 +22,6 @@ import {
   TrendingDown, 
   Thermometer, 
   Droplets,
-  Activity,
   Cpu,
   ChevronDown,
 } from "lucide-react";
@@ -148,16 +147,16 @@ export default function Home() {
 
         {/* Quick stats pills */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-md shadow-card">
+          <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-md shadow-card">
             <Cpu className="h-3 w-3 text-primary" />
             <span className="text-[10px] sm:text-xs font-bold text-gray-700">{onlineDevices}/{totalDevices}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-md shadow-card">
+          <div className="hidden sm:flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-md shadow-card">
             <Thermometer className="h-3 w-3 text-primary" />
             <span className="text-[10px] font-bold text-gray-700">{avgTempAll.toFixed(1)}°C</span>
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-md shadow-card">
+          <div className="hidden sm:flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-md shadow-card">
             <Droplets className="h-3 w-3 text-primary" />
             <span className="text-[10px] font-bold text-gray-700">{avgHumAll.toFixed(0)}%</span>
           </div>
@@ -168,18 +167,14 @@ export default function Home() {
       <div className="grid grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mb-4 sm:mb-5">
         {/* 3D Model */}
         <div className="col-span-1 lg:col-span-7 flex">
-          <div className="h-[145px] sm:h-[220px] lg:h-[300px] w-full relative rounded-md overflow-hidden bg-white shadow-card border border-gray-200/60">
+          <div className="h-[145px] sm:h-[220px] lg:h-[300px] w-full relative rounded-md overflow-hidden bg-background shadow-card border border-gray-200/60">
             <SplineComponent />
-            <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 bg-white/80 backdrop-blur-md px-2 py-1 rounded-md shadow-card text-[9px] sm:text-[10px] font-bold text-gray-500 flex items-center gap-1.5 pointer-events-none">
-              <Activity className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary animate-pulse" />
-              3D View
-            </div>
           </div>
         </div>
 
         {/* Average Card */}
         <div className="col-span-1 lg:col-span-5 flex flex-col">
-          <div className="bg-white rounded-md p-3 sm:p-5 shadow-card border border-gray-200/60 h-[145px] sm:h-[220px] lg:h-[300px] flex flex-col justify-center sm:justify-between gap-2 sm:gap-0">
+          <div className="bg-background rounded-md p-3 sm:p-5 shadow-card border border-gray-200/60 h-[145px] sm:h-[220px] lg:h-[300px] flex flex-col justify-center sm:justify-between gap-2 sm:gap-0">
             <div className="flex items-center justify-between gap-1.5 sm:mb-3">
               <div className="flex items-center gap-2">
                 <h3 className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">Device Stats</h3>
@@ -188,14 +183,14 @@ export default function Home() {
               <div className="relative">
                 <button 
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-1.5 bg-white border border-gray-200/60 hover:bg-gray-50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md text-[9px] sm:text-[10px] font-bold text-slate-600 transition-colors"
+                  className="flex items-center gap-1.5 bg-background border border-gray-200/60 hover:bg-gray-50 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md text-[9px] sm:text-[10px] font-bold text-slate-600 transition-colors"
                 >
                   <Cpu className="h-3 w-3 text-primary" />
                   <span className="max-w-[60px] sm:max-w-[70px] truncate">{selectedDevice.name}</span>
                   <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {dropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-40 sm:w-48 bg-white rounded-md shadow-card-elevated border border-gray-200/60 py-1 z-50">
+                  <div className="absolute right-0 top-full mt-1 w-40 sm:w-48 bg-background rounded-md shadow-card-elevated border border-gray-200/60 py-1 z-50">
                     {devices.map((d) => (
                       <button
                         key={d.id}

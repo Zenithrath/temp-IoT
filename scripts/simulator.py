@@ -29,13 +29,13 @@ except ImportError:
     print("ERROR: paho-mqtt not installed. Run: pip install paho-mqtt")
     sys.exit(1)
 
-TB_HOST = os.environ.get("TB_HOST", "localhost")
+TB_HOST = os.environ.get("TB_HOST", "mqtt.thingsboard.cloud")
 TB_PORT = int(os.environ.get("TB_PORT", "1883"))
 INTERVAL = float(os.environ.get("INTERVAL", "5"))
 
 # Device access tokens — match what's in Supabase settings table
 DEVICES = [
-    {"name": "MT-021", "token": os.environ.get("TB_TOKEN_2", "Io8CNkjZTgoWXf4c10Ra")},
+    {"name": "MT-021", "token": os.environ.get("TB_TOKEN_2", "Nt2h2OluS9F5iofYLpmu")},
 ]
 
 # Simulate realistic weather patterns

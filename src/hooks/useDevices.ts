@@ -17,60 +17,6 @@ export interface DeviceData {
   isOnline: boolean;
 }
 
-interface TbTelemetryValue {
-  ts: number;
-  value: string;
-}
-
-interface TbTelemetryResponse {
-  temperature?: TbTelemetryValue[];
-  humidity?: TbTelemetryValue[];
-}
-
-function parseTbTelemetry(telemetry: TbTelemetryResponse | undefined) {
-  if (!telemetry) {
-    return { temperature: 0, humidity: 0, tempChange: 0, humChange: 0, history: [] as { temp: number; hum: number; created_at?: string }[] };
-  }
-
-  const tempValues = (telemetry.temperature || []).map((v) => ({
-    ts: v.ts,
-    value: parseFloat(v.value),
-  }));
-
-  const humValues = (telemetry.humidity || []).map((v) => ({
-    ts: v.ts,
-    value: parseFloat(v.value),
-  }));
-
-  tempValues.sort((a, b) => a.ts - b.ts);
-  humValues.sort((a, b) => a.ts - b.ts);
-
-  const latestTemp = tempValues[tempValues.length - 1]?.value ?? 0;
-  const latestHum = humValues[humValues.length - 1]?.value ?? 0;
-  const prevTemp = tempValues[tempValues.length - 2]?.value ?? latestTemp;
-  const prevHum = humValues[humValues.length - 2]?.value ?? latestHum;
-
-  const tempChange = prevTemp !== 0
-    ? parseFloat((((latestTemp - prevTemp) / prevTemp) * 100).toFixed(1))
-    : 0;
-
-  const humChange = prevHum !== 0
-    ? parseFloat((((latestHum - prevHum) / prevHum) * 100).toFixed(1))
-    : 0;
-
-  const tempMap = new Map(tempValues.map((v) => [v.ts, v.value]));
-  const allTsSet = new Set<number>([...tempValues.map((v) => v.ts), ...humValues.map((v) => v.ts)]);
-  const allTs = Array.from(allTsSet).sort((a, b) => a - b);
-
-  const history = allTs.map((ts) => ({
-    temp: tempMap.get(ts) ?? 0,
-    hum: humValues.find((h) => h.ts === ts)?.value ?? 0,
-    created_at: new Date(ts).toISOString(),
-  }));
-
-  return { temperature: latestTemp, humidity: latestHum, tempChange, humChange, history };
-}
-
 export function useDevices() {
   const [devices, setDevices] = useState<DeviceData[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -104,70 +50,55 @@ export function useDevices() {
       return;
     }
 
-    // Fallback: jika ada thingsboard_device_id, fetch dari ThingsBoard
-    const tbDevices = deviceRows.filter((d) => d.thingsboard_device_id);
-    let tbTelemetryMap = new Map<string, TbTelemetryResponse>();
+    // Batch fetch ALL history for all devices at once
+    const deviceIds = deviceRows.map((d) => d.id);
+    const { data: allHistoryRows } = await supabase
+      .from('device_history')
+      .select('device_id, temperature, humidity, created_at')
+      .in('device_id', deviceIds)
+      .order('created_at', { ascending: true });
 
-    if (tbDevices.length > 0) {
-      const result = await getDevicesWithTbTelemetry();
-      if (result.data) {
-        for (const device of result.data as any[]) {
-          if (device.telemetry) {
-            tbTelemetryMap.set(device.id, device.telemetry);
-          }
-        }
+    // Group history by device_id
+    const historyByDevice = new Map<string, { temp: number; hum: number; created_at: string }[]>();
+    const lastSeenByDevice = new Map<string, string>();
+    (allHistoryRows || []).forEach((row) => {
+      if (!historyByDevice.has(row.device_id)) {
+        historyByDevice.set(row.device_id, []);
       }
-    }
+      historyByDevice.get(row.device_id)!.push({
+        temp: row.temperature,
+        hum: row.humidity,
+        created_at: row.created_at,
+      });
+      lastSeenByDevice.set(row.device_id, row.created_at);
+    });
 
-    const mapped: DeviceData[] = await Promise.all(
-      deviceRows.map(async (d) => {
-        const tbData = parseTbTelemetry(tbTelemetryMap.get(d.id));
+    const mapped: DeviceData[] = deviceRows.map((d) => {
+      const history = historyByDevice.get(d.id) || [];
+      const lastSeen = lastSeenByDevice.get(d.id) ?? null;
+      const isOnline = lastSeen
+        ? (Date.now() - new Date(lastSeen).getTime()) < 5 * 60 * 1000
+        : false;
+      const latestTemp = history.length > 0 ? history[history.length - 1].temp : 0;
+      const latestHum = history.length > 0 ? history[history.length - 1].hum : 0;
 
-        // Fetch ALL history from Supabase device_history
-        const { data: historyRows } = await supabase
-          .from('device_history')
-          .select('temperature, humidity, created_at')
-          .eq('device_id', d.id)
-          .order('created_at', { ascending: true });
-
-        // Fetch latest reading for online/offline status
-        const { data: latestRow } = await supabase
-          .from('device_history')
-          .select('created_at')
-          .eq('device_id', d.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const lastSeen = latestRow?.created_at ?? null;
-        const isOnline = lastSeen
-          ? (Date.now() - new Date(lastSeen).getTime()) < 5 * 60 * 1000
-          : false;
-
-        const supabaseHistory = (historyRows || [])
-          .map((r) => ({
-            temp: r.temperature,
-            hum: r.humidity,
-            created_at: r.created_at,
-          }));
-
-        // Use Supabase history if available, fallback to ThingsBoard history
-        const history = supabaseHistory.length > 0 ? supabaseHistory : tbData.history;
-
-        return {
-          id: d.id,
-          name: d.name,
-          location: d.location,
-          temperature: tbData.temperature,
-          humidity: tbData.humidity,
-          tempChange: tbData.tempChange,
-          humChange: tbData.humChange,
-          history,
-          lastSeen,
-          isOnline,
-        };
-      })
-    );
+      return {
+        id: d.id,
+        name: d.name,
+        location: d.location,
+        temperature: latestTemp,
+        humidity: latestHum,
+        tempChange: history.length > 1
+          ? parseFloat((((latestTemp - history[history.length - 2].temp) / (history[history.length - 2].temp || 1)) * 100).toFixed(1))
+          : 0,
+        humChange: history.length > 1
+          ? parseFloat((((latestHum - history[history.length - 2].hum) / (history[history.length - 2].hum || 1)) * 100).toFixed(1))
+          : 0,
+        history,
+        lastSeen,
+        isOnline,
+      };
+    });
 
     setDevices(mapped);
     setLoaded(true);
@@ -177,9 +108,20 @@ export function useDevices() {
     fetchDevices();
   }, [fetchDevices]);
 
-  // Polling every 5 seconds
+  // Polling every 10 seconds
   useEffect(() => {
-    const interval = setInterval(fetchDevices, 5000);
+    const interval = setInterval(fetchDevices, 10000);
+    return () => clearInterval(interval);
+  }, [fetchDevices]);
+
+  // Sync ThingsBoard telemetry → Supabase device_history (on load + every 60s)
+  useEffect(() => {
+    const syncTb = async () => {
+      await getDevicesWithTbTelemetry();
+      await fetchDevices();
+    };
+    syncTb();
+    const interval = setInterval(syncTb, 60000);
     return () => clearInterval(interval);
   }, [fetchDevices]);
 

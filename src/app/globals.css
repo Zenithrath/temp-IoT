@@ -50,13 +50,13 @@
 
 @layer utilities {
   .shadow-card {
-    box-shadow: -4px -4px 12px 0 rgba(255, 255, 255, 0.7), 4px 4px 10px 0 rgba(217, 210, 200, 0.45);
+    box-shadow: -5px -5px 14px 0 rgba(255, 255, 255, 0.75), 5px 5px 14px 0 rgba(180, 170, 155, 0.55);
   }
   .shadow-card-hover {
-    box-shadow: -6px -6px 16px 0 rgba(255, 255, 255, 0.8), 6px 6px 14px 0 rgba(217, 210, 200, 0.55);
+    box-shadow: -7px -7px 18px 0 rgba(255, 255, 255, 0.85), 7px 7px 18px 0 rgba(170, 160, 145, 0.65);
   }
   .shadow-card-elevated {
-    box-shadow: -8px -8px 20px 0 rgba(255, 255, 255, 0.85), 8px 8px 20px 0 rgba(217, 210, 200, 0.6);
+    box-shadow: -9px -9px 22px 0 rgba(255, 255, 255, 0.9), 9px 9px 22px 0 rgba(160, 150, 135, 0.7);
   }
   .glass {
     background: rgba(255, 255, 255, 0.8);

@@ -45,7 +45,7 @@ export default function SignInForm() {
         console.log(error.message);
         toast({
           variant: "destructive",
-          title: "You submitted the following values:",
+          title: "Login Failed",
           description: (
             <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
               <code className="text-white">{error.message}</code>
@@ -53,15 +53,7 @@ export default function SignInForm() {
           ),
         });
       } else {
-        console.log("succes");
-        toast({
-          title: "You submitted the following values:",
-          description: (
-            <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-              <code className="text-white">Successfully Login</code>
-            </pre>
-          ),
-        });
+        window.location.href = "/";
       }
     });
   }

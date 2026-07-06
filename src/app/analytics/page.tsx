@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import {
   Chart as ChartJS,
@@ -26,7 +26,22 @@ const TIME_RANGES: { value: TimeRange; label: string }[] = [
 export default function AnalyticsPage() {
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>("1w");
+  const [tablePage, setTablePage] = useState(0);
   const { data, devices, loaded, error } = useAnalytics(selectedDevice, timeRange);
+
+  const ROWS_PER_PAGE = 10;
+
+  const sortedReadings = useMemo(() => {
+    return [...data.rawReadings].reverse();
+  }, [data.rawReadings]);
+
+  // Reset page when data changes
+  useEffect(() => {
+    setTablePage(0);
+  }, [selectedDevice, timeRange]);
+
+  const totalPages = Math.ceil(sortedReadings.length / ROWS_PER_PAGE);
+  const pageReadings = sortedReadings.slice(tablePage * ROWS_PER_PAGE, (tablePage + 1) * ROWS_PER_PAGE);
 
   const tempChartData = {
     labels: data.labels,
@@ -132,7 +147,7 @@ export default function AnalyticsPage() {
           <select
             value={selectedDevice ?? ""}
             onChange={(e) => setSelectedDevice(e.target.value || null)}
-            className="px-4 py-2 text-xs font-bold rounded-md border border-gray-200/60 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="px-4 py-2 text-xs font-bold rounded-md border border-gray-200/60 bg-background text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             <option value="">Select Device</option>
             {devices.map((d) => (
@@ -143,7 +158,7 @@ export default function AnalyticsPage() {
           </select>
 
           {/* Time Range Selector */}
-          <div className="flex items-center gap-1 bg-white p-1.5 rounded-md border border-gray-200/60">
+          <div className="flex items-center gap-1 bg-background p-1.5 rounded-md border border-gray-200/60">
             {TIME_RANGES.map((tr) => (
               <button
                 key={tr.value}
@@ -290,7 +305,7 @@ export default function AnalyticsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div>
             <h3 className="font-bold text-slate-900">Telemetry Data Log</h3>
-            <p className="text-xs text-slate-400 mt-0.5">{data.rawReadings.length} records — sorted by timestamp</p>
+            <p className="text-xs text-slate-400 mt-0.5">{sortedReadings.length} records — newest first</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -304,9 +319,9 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-md border border-gray-200/60 max-h-[400px] overflow-y-auto">
+        <div className="rounded-md border border-gray-200/60 overflow-hidden">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-100 text-slate-600 font-semibold sticky top-0">
+            <thead className="bg-slate-100 text-slate-600 font-semibold">
               <tr>
                 <th className="px-4 py-3">#</th>
                 <th className="px-4 py-3">Timestamp</th>
@@ -316,31 +331,78 @@ export default function AnalyticsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200/50">
-              {data.rawReadings.map((r, index) => (
-                <tr key={index} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 text-slate-400 font-mono text-xs">{index + 1}</td>
-                  <td className="px-4 py-3 font-bold text-slate-800 tabular-nums">
-                    {new Date(r.created_at).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="px-4 py-3 tabular-nums">{r.temperature}</td>
-                  <td className="px-4 py-3 tabular-nums">{r.humidity}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                      r.temperature > 30 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
-                    }`}>
-                      {r.temperature > 30 ? 'Warning' : 'Optimal'}
-                    </span>
-                  </td>
+              {pageReadings.map((r, i) => {
+                const rowNum = tablePage * ROWS_PER_PAGE + i + 1;
+                return (
+                  <tr key={rowNum} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 text-slate-400 font-mono text-xs">{rowNum}</td>
+                    <td className="px-4 py-3 font-bold text-slate-800 tabular-nums">
+                      {new Date(r.created_at).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="px-4 py-3 tabular-nums">{r.temperature}</td>
+                    <td className="px-4 py-3 tabular-nums">{r.humidity}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                        r.temperature > 30 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
+                      }`}>
+                        {r.temperature > 30 ? 'Warning' : 'Optimal'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {pageReadings.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400 text-sm">No data</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-xs text-slate-400 font-semibold">
+              Page {tablePage + 1} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setTablePage(0)}
+                disabled={tablePage === 0}
+                className="px-3 py-1.5 text-xs font-bold bg-background border border-gray-200/60 rounded-md shadow-card hover:shadow-card-hover disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                First
+              </button>
+              <button
+                onClick={() => setTablePage((p) => Math.max(0, p - 1))}
+                disabled={tablePage === 0}
+                className="px-3 py-1.5 text-xs font-bold bg-background border border-gray-200/60 rounded-md shadow-card hover:shadow-card-hover disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Prev
+              </button>
+              <button
+                onClick={() => setTablePage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={tablePage >= totalPages - 1}
+                className="px-3 py-1.5 text-xs font-bold bg-background border border-gray-200/60 rounded-md shadow-card hover:shadow-card-hover disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setTablePage(totalPages - 1)}
+                disabled={tablePage >= totalPages - 1}
+                className="px-3 py-1.5 text-xs font-bold bg-background border border-gray-200/60 rounded-md shadow-card hover:shadow-card-hover disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       </>
       )}

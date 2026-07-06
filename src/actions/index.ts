@@ -132,54 +132,47 @@ export async function getDevicesWithTbTelemetry() {
     })
   );
 
-  // Save ALL telemetry readings to Supabase device_history
-  // Skip duplicates by checking existing timestamps for this device
+  // Save telemetry readings to Supabase device_history
   for (const device of devices) {
-    if (device.telemetry && typeof device.telemetry === 'object' && !Array.isArray(device.telemetry)) {
-      const tb = device.telemetry as { temperature?: { ts: number; value: string }[]; humidity?: { ts: number; value: string }[] };
-      const tempArr = tb.temperature || [];
-      const humArr = tb.humidity || [];
-      if (tempArr.length === 0 || humArr.length === 0) continue;
+    if (!device.telemetry || typeof device.telemetry !== 'object' || Array.isArray(device.telemetry)) continue;
 
-      const sortedTemp = [...tempArr].sort((a, b) => a.ts - b.ts);
-      const sortedHum = [...humArr].sort((a, b) => a.ts - b.ts);
+    const tb = device.telemetry as { temperature?: { ts: number; value: string }[]; humidity?: { ts: number; value: string }[] };
+    const tempArr = tb.temperature || [];
+    const humArr = tb.humidity || [];
+    if (tempArr.length === 0 || humArr.length === 0) continue;
 
-      // Merge temp + hum by timestamp (closest match within 10s)
-      const tempMap = new Map(sortedTemp.map((t) => [t.ts, parseFloat(t.value)]));
-      const allTempTs = sortedTemp.map((t) => t.ts);
-      const allHumTs = sortedHum.map((h) => h.ts);
-      const allTimestamps = Array.from(new Set(allTempTs.concat(allHumTs))).sort((a, b) => a - b);
+    const sortedTemp = [...tempArr].sort((a, b) => a.ts - b.ts);
+    const sortedHum = [...humArr].sort((a, b) => a.ts - b.ts);
 
-      // Fetch existing timestamps for this device (last hour) to skip duplicates
-      const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
-      const { data: existingRows } = await supabase
-        .from('device_history')
-        .select('created_at')
-        .eq('device_id', device.id)
-        .gte('created_at', oneHourAgo);
+    const rowsToInsert: { device_id: string; temperature: number; humidity: number; created_at: string }[] = [];
 
-      const existingTimestamps = new Set(
-        (existingRows || []).map((r) => new Date(r.created_at).getTime())
-      );
+    for (const t of sortedTemp) {
+      const closestHum = sortedHum.reduce((best, h) => {
+        const diff = Math.abs(h.ts - t.ts);
+        return diff < best.diff ? { diff, entry: h } : best;
+      }, { diff: Infinity, entry: sortedHum[0] });
 
-      const newRows: { device_id: string; temperature: number; humidity: number; created_at: string }[] = [];
-      for (const ts of allTimestamps) {
-        if (existingTimestamps.has(ts)) continue;
-
-        const temp = tempMap.get(ts);
-        const humEntry = sortedHum.find((h) => Math.abs(h.ts - ts) < 10000);
-        if (temp !== undefined && humEntry) {
-          newRows.push({
-            device_id: device.id,
-            temperature: temp,
-            humidity: parseFloat(humEntry.value),
-            created_at: new Date(ts).toISOString(),
-          });
-        }
+      if (closestHum.diff < 30000) {
+        rowsToInsert.push({
+          device_id: device.id,
+          temperature: parseFloat(t.value),
+          humidity: parseFloat(closestHum.entry.value),
+          created_at: new Date(t.ts).toISOString(),
+        });
       }
+    }
 
-      if (newRows.length > 0) {
-        await supabase.from('device_history').insert(newRows);
+    if (rowsToInsert.length > 0) {
+      try {
+        await supabase.from('device_history').insert(rowsToInsert);
+      } catch {
+        // If batch insert fails, try inserting just the latest point
+        const latest = rowsToInsert[rowsToInsert.length - 1];
+        try {
+          await supabase.from('device_history').insert(latest);
+        } catch {
+          // Ignore — will retry next cycle
+        }
       }
     }
   }

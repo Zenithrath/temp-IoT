@@ -117,8 +117,12 @@ export function useDevices() {
   // Sync ThingsBoard telemetry → Supabase device_history (on load + every 60s)
   useEffect(() => {
     const syncTb = async () => {
-      await getDevicesWithTbTelemetry();
-      await fetchDevices();
+      try {
+        await getDevicesWithTbTelemetry();
+        await fetchDevices();
+      } catch {
+        // ThingsBoard sync failed — will retry next cycle
+      }
     };
     syncTb();
     const interval = setInterval(syncTb, 60000);

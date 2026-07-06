@@ -132,27 +132,54 @@ export async function getDevicesWithTbTelemetry() {
     })
   );
 
-  // Save latest readings to Supabase device_history for backup
-  // Only save if telemetry is fresh (<5 min old) to avoid marking offline devices as online
-  const FIVE_MINUTES_MS = 5 * 60 * 1000;
+  // Save ALL telemetry readings to Supabase device_history
+  // Skip duplicates by checking existing timestamps for this device
   for (const device of devices) {
     if (device.telemetry && typeof device.telemetry === 'object' && !Array.isArray(device.telemetry)) {
       const tb = device.telemetry as { temperature?: { ts: number; value: string }[]; humidity?: { ts: number; value: string }[] };
-      const tempArr = tb.temperature;
-      const humArr = tb.humidity;
-      if (tempArr && humArr && tempArr.length > 0 && humArr.length > 0) {
-        const sortedTemp = [...tempArr].sort((a, b) => a.ts - b.ts);
-        const sortedHum = [...humArr].sort((a, b) => a.ts - b.ts);
-        const latestTemp = sortedTemp[sortedTemp.length - 1];
-        const latestHum = sortedHum[sortedHum.length - 1];
-        // Only save if telemetry timestamp is within last 5 minutes
-        if (latestTemp && latestHum && (Date.now() - latestTemp.ts) < FIVE_MINUTES_MS) {
-          await supabase.from('device_history').insert({
+      const tempArr = tb.temperature || [];
+      const humArr = tb.humidity || [];
+      if (tempArr.length === 0 || humArr.length === 0) continue;
+
+      const sortedTemp = [...tempArr].sort((a, b) => a.ts - b.ts);
+      const sortedHum = [...humArr].sort((a, b) => a.ts - b.ts);
+
+      // Merge temp + hum by timestamp (closest match within 10s)
+      const tempMap = new Map(sortedTemp.map((t) => [t.ts, parseFloat(t.value)]));
+      const allTempTs = sortedTemp.map((t) => t.ts);
+      const allHumTs = sortedHum.map((h) => h.ts);
+      const allTimestamps = Array.from(new Set(allTempTs.concat(allHumTs))).sort((a, b) => a - b);
+
+      // Fetch existing timestamps for this device (last hour) to skip duplicates
+      const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+      const { data: existingRows } = await supabase
+        .from('device_history')
+        .select('created_at')
+        .eq('device_id', device.id)
+        .gte('created_at', oneHourAgo);
+
+      const existingTimestamps = new Set(
+        (existingRows || []).map((r) => new Date(r.created_at).getTime())
+      );
+
+      const newRows: { device_id: string; temperature: number; humidity: number; created_at: string }[] = [];
+      for (const ts of allTimestamps) {
+        if (existingTimestamps.has(ts)) continue;
+
+        const temp = tempMap.get(ts);
+        const humEntry = sortedHum.find((h) => Math.abs(h.ts - ts) < 10000);
+        if (temp !== undefined && humEntry) {
+          newRows.push({
             device_id: device.id,
-            temperature: parseFloat(latestTemp.value),
-            humidity: parseFloat(latestHum.value),
+            temperature: temp,
+            humidity: parseFloat(humEntry.value),
+            created_at: new Date(ts).toISOString(),
           });
         }
+      }
+
+      if (newRows.length > 0) {
+        await supabase.from('device_history').insert(newRows);
       }
     }
   }

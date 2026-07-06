@@ -28,7 +28,7 @@ export function Sidebar({ className }: SidebarProps) {
     <aside className={cn("flex flex-col h-screen bg-[#100901] justify-between shrink-0 transition-all duration-500 ease-in-out", collapsed ? "w-[72px] p-3" : "w-64 p-6", className)}>
       <div className="flex flex-col gap-8">
         <Link href="/" className={cn("flex items-center ", collapsed ? "justify-center px-0" : "px-10")}>
-          <Image src="/arka.jpg" alt="Arka Logo" width={200} height={50} className="object-cover shrink-4" />
+          <Image src="/ARKA.jpg" alt="Arka Logo" width={200} height={50} className="object-cover shrink-4" />
         </Link>
 
         <nav className="flex flex-col gap-1.5">

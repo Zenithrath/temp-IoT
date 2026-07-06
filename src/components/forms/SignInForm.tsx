@@ -15,7 +15,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Icons } from "@/components/icons";
-import { signInWithEmailAndPassword } from "@/actions";
+import createSupabaseClientClient from "@/lib/supabase/client";
 import { useTransition } from "react";
 
 const FormSchema = z.object({
@@ -38,11 +38,13 @@ export default function SignInForm() {
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     startTransition(async () => {
-      const result = await signInWithEmailAndPassword(data);
-      const { error } = result;
+      const supabase = createSupabaseClientClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
 
       if (error?.message) {
-        console.log(error.message);
         toast({
           variant: "destructive",
           title: "Login Failed",

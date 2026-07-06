@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import createSupabaseClientClient from "@/lib/supabase/client";
-import { getDevicesWithTbTelemetry } from "@/actions";
 
 export interface DeviceData {
   id: string;
@@ -15,133 +14,141 @@ export interface DeviceData {
   history: { temp: number; hum: number; created_at?: string }[];
   lastSeen: string | null;
   isOnline: boolean;
+  thingsboard_device_id?: string | null;
+  thingsboard_access_token?: string | null;
 }
 
 export function useDevices() {
   const [devices, setDevices] = useState<DeviceData[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fetchingRef = useRef(false);
 
   const fetchDevices = useCallback(async () => {
-    const supabase = createSupabaseClientClient();
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setDevices([]);
-      setLoaded(true);
-      return;
-    }
+    try {
+      const supabase = createSupabaseClientClient();
 
-    const { data: deviceRows, error: devErr } = await supabase
-      .from('devices')
-      .select('id, name, location, thingsboard_device_id')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true });
-
-    if (devErr) {
-      setError(devErr.message);
-      setLoaded(true);
-      return;
-    }
-
-    if (!deviceRows || deviceRows.length === 0) {
-      setDevices([]);
-      setLoaded(true);
-      return;
-    }
-
-    // Batch fetch history for all devices (last 7 days)
-    const deviceIds = deviceRows.map((d) => d.id);
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: allHistoryRows } = await supabase
-      .from('device_history')
-      .select('device_id, temperature, humidity, created_at')
-      .in('device_id', deviceIds)
-      .gte('created_at', sevenDaysAgo)
-      .order('created_at', { ascending: true });
-
-    // Group history by device_id
-    const historyByDevice = new Map<string, { temp: number; hum: number; created_at: string }[]>();
-    const lastSeenByDevice = new Map<string, string>();
-    (allHistoryRows || []).forEach((row) => {
-      if (!historyByDevice.has(row.device_id)) {
-        historyByDevice.set(row.device_id, []);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setDevices([]);
+        setLoaded(true);
+        return;
       }
-      historyByDevice.get(row.device_id)!.push({
-        temp: row.temperature,
-        hum: row.humidity,
-        created_at: row.created_at,
+
+      const { data: deviceRows, error: devErr } = await supabase
+        .from('devices')
+        .select('id, name, location, thingsboard_device_id, thingsboard_access_token')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (devErr) {
+        setError(devErr.message);
+        setLoaded(true);
+        return;
+      }
+
+      if (!deviceRows || deviceRows.length === 0) {
+        setDevices([]);
+        setLoaded(true);
+        return;
+      }
+
+      const deviceIds = deviceRows.map((d) => d.id);
+
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: historyRows } = await supabase
+        .from('device_history')
+        .select('device_id, temperature, humidity, created_at')
+        .in('device_id', deviceIds)
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
+      const historyByDevice = new Map<string, { temp: number; hum: number; created_at: string }[]>();
+      (historyRows || []).forEach((row) => {
+        const arr = historyByDevice.get(row.device_id) || [];
+        arr.unshift({
+          temp: row.temperature,
+          hum: row.humidity,
+          created_at: row.created_at,
+        });
+        historyByDevice.set(row.device_id, arr);
       });
-      lastSeenByDevice.set(row.device_id, row.created_at);
-    });
 
-    const mapped: DeviceData[] = deviceRows.map((d) => {
-      const history = historyByDevice.get(d.id) || [];
-      const lastSeen = lastSeenByDevice.get(d.id) ?? null;
-      const isOnline = lastSeen
-        ? (Date.now() - new Date(lastSeen).getTime()) < 5 * 60 * 1000
-        : false;
-      const latestTemp = history.length > 0 ? history[history.length - 1].temp : 0;
-      const latestHum = history.length > 0 ? history[history.length - 1].hum : 0;
+      const mapped: DeviceData[] = deviceRows.map((d) => {
+        const history = historyByDevice.get(d.id) || [];
+        const latest = history[history.length - 1];
+        const previous = history.length > 1 ? history[history.length - 2] : null;
 
-      return {
-        id: d.id,
-        name: d.name,
-        location: d.location,
-        temperature: latestTemp,
-        humidity: latestHum,
-        tempChange: history.length > 1
-          ? parseFloat((((latestTemp - history[history.length - 2].temp) / (history[history.length - 2].temp || 1)) * 100).toFixed(1))
-          : 0,
-        humChange: history.length > 1
-          ? parseFloat((((latestHum - history[history.length - 2].hum) / (history[history.length - 2].hum || 1)) * 100).toFixed(1))
-          : 0,
-        history,
-        lastSeen,
-        isOnline,
-      };
-    });
+        const lastSeen = latest?.created_at ?? null;
+        const isOnline = lastSeen
+          ? (Date.now() - new Date(lastSeen).getTime()) < 5 * 60 * 1000
+          : false;
 
-    setDevices(mapped);
-    setLoaded(true);
+        const latestTemp = latest?.temp ?? 0;
+        const latestHum = latest?.hum ?? 0;
+
+        return {
+          id: d.id,
+          name: d.name,
+          location: d.location,
+          temperature: latestTemp,
+          humidity: latestHum,
+          tempChange: previous
+            ? parseFloat((((latestTemp - previous.temp) / (previous.temp || 1)) * 100).toFixed(1))
+            : 0,
+          humChange: previous
+            ? parseFloat((((latestHum - previous.hum) / (previous.hum || 1)) * 100).toFixed(1))
+            : 0,
+          history,
+          lastSeen,
+          isOnline,
+          thingsboard_device_id: d.thingsboard_device_id,
+          thingsboard_access_token: d.thingsboard_access_token,
+        };
+      });
+
+      setDevices(mapped);
+      setLoaded(true);
+    } catch {
+      setError(null);
+    } finally {
+      fetchingRef.current = false;
+    }
   }, []);
 
   useEffect(() => {
     fetchDevices();
   }, [fetchDevices]);
 
-  // Polling every 10 seconds
   useEffect(() => {
-    const interval = setInterval(fetchDevices, 10000);
+    const interval = setInterval(fetchDevices, 5000);
     return () => clearInterval(interval);
   }, [fetchDevices]);
 
-  // Sync ThingsBoard telemetry → Supabase device_history (on load + every 60s)
   useEffect(() => {
-    const syncTb = async () => {
+    const sync = async () => {
       try {
-        await getDevicesWithTbTelemetry();
+        await fetch('/api/sync');
         await fetchDevices();
       } catch {
-        // ThingsBoard sync failed — will retry next cycle
+        // Retry next cycle
       }
     };
-    syncTb();
-    const interval = setInterval(syncTb, 60000);
+    sync();
+    const interval = setInterval(sync, 60000);
     return () => clearInterval(interval);
   }, [fetchDevices]);
 
-  // Realtime: listen for device list changes AND new history data
   useEffect(() => {
     const supabase = createSupabaseClientClient();
 
     const channel = supabase
-      .channel('db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'devices' },
-        () => fetchDevices()
-      )
+      .channel('device_history_changes')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'device_history' },
@@ -154,7 +161,11 @@ export function useDevices() {
     };
   }, [fetchDevices]);
 
-  const addDevice = useCallback(async (name: string, location: string, opts?: { thingsboardDeviceId?: string; thingsboardAccessToken?: string }) => {
+  const addDevice = useCallback(async (
+    name: string,
+    location: string,
+    opts?: { thingsboardDeviceId?: string; thingsboardAccessToken?: string }
+  ) => {
     const supabase = createSupabaseClientClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: 'Not authenticated' };
@@ -171,12 +182,22 @@ export function useDevices() {
     return { error: null };
   }, [fetchDevices]);
 
-  const updateDevice = useCallback(async (id: string, name: string, location: string, opts?: { thingsboardDeviceId?: string; thingsboardAccessToken?: string }) => {
+  const updateDevice = useCallback(async (
+    id: string,
+    name: string,
+    location: string,
+    opts?: { thingsboardDeviceId?: string; thingsboardAccessToken?: string }
+  ) => {
     const supabase = createSupabaseClientClient();
-    const updateData: Record<string, any> = { name, location };
-    if (opts?.thingsboardDeviceId !== undefined) updateData.thingsboard_device_id = opts.thingsboardDeviceId;
-    if (opts?.thingsboardAccessToken !== undefined) updateData.thingsboard_access_token = opts.thingsboardAccessToken;
-    const { error } = await supabase.from('devices').update(updateData).eq('id', id);
+    const { error } = await supabase
+      .from('devices')
+      .update({
+        name,
+        location,
+        ...(opts?.thingsboardDeviceId !== undefined && { thingsboard_device_id: opts.thingsboardDeviceId }),
+        ...(opts?.thingsboardAccessToken !== undefined && { thingsboard_access_token: opts.thingsboardAccessToken }),
+      })
+      .eq('id', id);
     if (error) return { error: error.message };
     await fetchDevices();
     return { error: null };

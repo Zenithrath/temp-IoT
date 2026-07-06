@@ -9,9 +9,9 @@ const char* WIFI_SSID = "HQ_Mesh";
 const char* WIFI_PASS = "##ARKA##4321##";
 
 
-const char* TB_SERVER = "172.22.64.1";   // ← IP laptop (jalankan ipconfig)
+const char* TB_SERVER = "mqtt.thingsboard.cloud";   // ← ThingsBoard Cloud
 const int   TB_PORT   = 1883;
-const char* TB_TOKEN  = "HBrD0pYsbErz9uFdsq93";  // ← dari ThingsBoard
+const char* TB_TOKEN  = "uCIMsiaE9GNTH2k0yuxN";  // ← MT-022 token dari ThingsBoard Cloud
 
 #define DHTPIN 23
 #define DHTTYPE DHT11

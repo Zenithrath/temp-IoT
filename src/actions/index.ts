@@ -133,6 +133,9 @@ export async function getDevicesWithTbTelemetry() {
   );
 
   // Save telemetry readings to Supabase device_history
+  const now = Date.now();
+  const TEN_MINUTES_MS = 10 * 60 * 1000;
+
   for (const device of devices) {
     if (!device.telemetry || typeof device.telemetry !== 'object' || Array.isArray(device.telemetry)) continue;
 
@@ -141,39 +144,28 @@ export async function getDevicesWithTbTelemetry() {
     const humArr = tb.humidity || [];
     if (tempArr.length === 0 || humArr.length === 0) continue;
 
+    // Only save if latest telemetry is recent (< 10 min old)
+    const latestTemp = tempArr[tempArr.length - 1];
+    if (!latestTemp || (now - latestTemp.ts) > TEN_MINUTES_MS) continue;
+
     const sortedTemp = [...tempArr].sort((a, b) => a.ts - b.ts);
     const sortedHum = [...humArr].sort((a, b) => a.ts - b.ts);
 
-    const rowsToInsert: { device_id: string; temperature: number; humidity: number; created_at: string }[] = [];
+    // Only save the latest reading to keep it simple and fast
+    const latest = sortedTemp[sortedTemp.length - 1];
+    const closestHum = sortedHum.reduce((best, h) => {
+      const diff = Math.abs(h.ts - latest.ts);
+      return diff < best.diff ? { diff, entry: h } : best;
+    }, { diff: Infinity, entry: sortedHum[0] });
 
-    for (const t of sortedTemp) {
-      const closestHum = sortedHum.reduce((best, h) => {
-        const diff = Math.abs(h.ts - t.ts);
-        return diff < best.diff ? { diff, entry: h } : best;
-      }, { diff: Infinity, entry: sortedHum[0] });
-
-      if (closestHum.diff < 30000) {
-        rowsToInsert.push({
-          device_id: device.id,
-          temperature: parseFloat(t.value),
-          humidity: parseFloat(closestHum.entry.value),
-          created_at: new Date(t.ts).toISOString(),
-        });
-      }
-    }
-
-    if (rowsToInsert.length > 0) {
-      try {
-        await supabase.from('device_history').insert(rowsToInsert);
-      } catch {
-        // If batch insert fails, try inserting just the latest point
-        const latest = rowsToInsert[rowsToInsert.length - 1];
-        try {
-          await supabase.from('device_history').insert(latest);
-        } catch {
-          // Ignore — will retry next cycle
-        }
-      }
+    try {
+      await supabase.from('device_history').insert({
+        device_id: device.id,
+        temperature: parseFloat(latest.value),
+        humidity: parseFloat(closestHum.entry.value),
+      });
+    } catch {
+      // Ignore — will retry next cycle
     }
   }
 

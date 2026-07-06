@@ -50,12 +50,14 @@ export function useDevices() {
       return;
     }
 
-    // Batch fetch ALL history for all devices at once
+    // Batch fetch history for all devices (last 7 days)
     const deviceIds = deviceRows.map((d) => d.id);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: allHistoryRows } = await supabase
       .from('device_history')
       .select('device_id, temperature, humidity, created_at')
       .in('device_id', deviceIds)
+      .gte('created_at', sevenDaysAgo)
       .order('created_at', { ascending: true });
 
     // Group history by device_id
@@ -129,15 +131,20 @@ export function useDevices() {
     return () => clearInterval(interval);
   }, [fetchDevices]);
 
-  // Realtime: listen for device list changes in Supabase
+  // Realtime: listen for device list changes AND new history data
   useEffect(() => {
     const supabase = createSupabaseClientClient();
 
     const channel = supabase
-      .channel('devices_changes')
+      .channel('db-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'devices' },
+        () => fetchDevices()
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'device_history' },
         () => fetchDevices()
       )
       .subscribe();

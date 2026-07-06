@@ -61,7 +61,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Account Info Card (Span 5) */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="bg-white rounded-2xl p-6 border border-cream-300/30 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.03)] transition-all duration-300">
+          <div className="bg-white rounded-md p-6 border border-cream-300/30 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.03)] transition-all duration-300">
             <div className="flex flex-col items-center text-center pb-6 border-b border-gray-100">
               <Avatar className="w-24 h-24 border-4 border-cream-100 shadow-inner mb-4">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -89,7 +89,7 @@ export default function ProfilePage() {
 
             <div className="pt-6 space-y-4">
               <div className="flex items-center gap-3.5 text-sm">
-                <div className="p-2 bg-cream-100 rounded-xl text-gray-500">
+                <div className="p-2 bg-cream-100 rounded-md text-gray-500">
                   <Mail className="h-4.5 w-4.5" />
                 </div>
                 <div className="flex flex-col">
@@ -99,7 +99,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="flex items-center gap-3.5 text-sm">
-                <div className="p-2 bg-cream-100 rounded-xl text-gray-500">
+                <div className="p-2 bg-cream-100 rounded-md text-gray-500">
                   <Calendar className="h-4.5 w-4.5" />
                 </div>
                 <div className="flex flex-col">
@@ -115,14 +115,14 @@ export default function ProfilePage() {
             </div>
 
             {isGuest && (
-              <div className="mt-8 p-4 bg-amber-50/40 border border-amber-200/40 rounded-2xl flex flex-col items-center text-center">
+              <div className="mt-8 p-4 bg-amber-50/40 border border-amber-200/40 rounded-md flex flex-col items-center text-center">
                 <ShieldAlert className="h-6 w-6 text-amber-500 mb-2" />
                 <h4 className="text-xs font-bold text-gray-800">You are logged out</h4>
                 <p className="text-[11px] text-gray-500 mt-1 max-w-[200px]">
                   Sign in or create an account to pair personal IoT hardware stations.
                 </p>
                 <Link href="/auth" className="w-full mt-4">
-                  <Button className="w-full bg-primary hover:bg-primary/95 text-white gap-2 rounded-xl py-2">
+                  <Button className="w-full bg-primary hover:bg-primary/95 text-white gap-2 rounded-md py-2">
                     <LogIn className="h-4 w-4" />
                     Sign In Now
                   </Button>
@@ -135,7 +135,7 @@ export default function ProfilePage() {
         {/* Right Column: Devices & Preferences (Span 7) */}
         <div className="lg:col-span-7 flex flex-col gap-6">
           {/* Connected Devices */}
-          <div className="bg-white rounded-2xl p-6 border border-cream-300/30 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.03)] transition-all duration-300">
+          <div className="bg-white rounded-md p-6 border border-cream-300/30 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.03)] transition-all duration-300">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="font-bold text-gray-900">Connected IoT Devices</h3>
@@ -153,10 +153,10 @@ export default function ProfilePage() {
               ].map((station) => (
                 <div 
                   key={station.id} 
-                  className="flex items-center justify-between p-4 bg-cream-50 hover:bg-cream-100/50 rounded-2xl border border-cream-200/20 transition-all duration-200 group"
+                  className="flex items-center justify-between p-4 bg-cream-50 hover:bg-cream-100/50 rounded-md border border-cream-200/20 transition-all duration-200 group"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="p-2.5 bg-white rounded-xl shadow-sm text-gray-400 group-hover:text-primary transition-colors">
+                    <div className="p-2.5 bg-white rounded-md shadow-sm text-gray-400 group-hover:text-primary transition-colors">
                       <Cpu className="h-5 w-5" />
                     </div>
                     <div className="flex flex-col">
@@ -176,7 +176,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Preferences */}
-          <div className="bg-white rounded-2xl p-6 border border-cream-300/30 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.03)] transition-all duration-300">
+          <div className="bg-white rounded-md p-6 border border-cream-300/30 shadow-[0_4px_20px_rgba(0,0,0,0.015)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.03)] transition-all duration-300">
             <div>
               <h3 className="font-bold text-gray-900 mb-1">Alert Preferences</h3>
               <p className="text-xs text-gray-400">Configure notification alerts for telemetry triggers</p>
@@ -185,7 +185,7 @@ export default function ProfilePage() {
             <div className="mt-6 space-y-5">
               <div className="flex items-center justify-between py-1">
                 <div className="flex items-start gap-3.5">
-                  <div className="p-2 bg-cream-100 rounded-xl text-gray-500 mt-0.5">
+                  <div className="p-2 bg-cream-100 rounded-md text-gray-500 mt-0.5">
                     <Bell className="h-4.5 w-4.5" />
                   </div>
                   <div className="flex flex-col">
@@ -210,7 +210,7 @@ export default function ProfilePage() {
 
               <div className="flex items-center justify-between py-1 border-t border-gray-50 pt-5">
                 <div className="flex items-start gap-3.5">
-                  <div className="p-2 bg-cream-100 rounded-xl text-gray-500 mt-0.5">
+                  <div className="p-2 bg-cream-100 rounded-md text-gray-500 mt-0.5">
                     <Flame className="h-4.5 w-4.5" />
                   </div>
                   <div className="flex flex-col">

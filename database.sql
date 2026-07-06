@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS devices (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   location TEXT,
+  thingsboard_device_id TEXT,
+  thingsboard_access_token TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
@@ -51,3 +53,21 @@ CREATE POLICY "Users can delete own device history" ON device_history FOR DELETE
 CREATE INDEX IF NOT EXISTS idx_device_history_created_at ON device_history(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_device_history_device_id ON device_history(device_id);
 CREATE INDEX IF NOT EXISTS idx_devices_user_id ON devices(user_id);
+
+-- Settings table (ThingsBoard global config)
+CREATE TABLE IF NOT EXISTS settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  thingsboard_device_id TEXT,
+  thingsboard_access_token TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- Migration: rename old columns if they exist
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'settings' AND column_name = 'entitytype') THEN
+    ALTER TABLE settings RENAME COLUMN entityType TO thingsboard_device_id;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'settings' AND column_name = 'entityid') THEN
+    ALTER TABLE settings RENAME COLUMN entityId TO thingsboard_access_token;
+  END IF;
+END $$;

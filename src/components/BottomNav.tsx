@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { 
-  BarChart3, 
-  LayoutDashboard, 
-  Settings, 
+import {
+  BarChart3,
+  LayoutDashboard,
+  Settings,
   User,
 } from "lucide-react";
 
@@ -21,37 +21,34 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200/60 px-2 pb-safe">
-      <div className="flex items-center justify-around py-1.5">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#100901] border-t border-white/10 px-2 pb-safe">
+      <div className="flex items-center justify-around py-2">
         {navigationItems.map((item) => {
-          const isActive = item.href === "/" 
-            ? pathname === "/" 
+          const isActive = item.href === "/"
+            ? pathname === "/"
             : pathname.startsWith(item.href);
 
           return (
             <Link
               key={item.id}
               href={item.href}
-              className={cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 min-w-[60px]",
-                isActive 
-                  ? "text-primary" 
-                  : "text-gray-400 hover:text-gray-600"
-              )}
+              className="relative flex flex-col items-center gap-1 px-4 py-2 min-w-[60px] transition-all duration-200 hover:text-white"
             >
-              <div className={cn(
-                "p-1.5 rounded-xl transition-all duration-200",
-                isActive ? "bg-primary/10" : ""
-              )}>
-                <item.icon className={cn(
+              {isActive && (
+                <div className="absolute -top-2 left-0 right-0 h-0.5 bg-primary rounded-md" />
+              )}
+              <item.icon
+                className={cn(
                   "h-5 w-5 transition-transform duration-200",
-                  isActive ? "text-primary scale-110" : "text-gray-400"
-                )} />
-              </div>
-              <span className={cn(
-                "text-[10px] font-semibold transition-colors duration-200",
-                isActive ? "text-primary" : "text-gray-400"
-              )}>
+                  isActive ? "text-primary" : "text-gray-400"
+                )}
+              />
+              <span
+                className={cn(
+                  "text-[10px] font-semibold transition-colors duration-200",
+                  isActive ? "text-primary" : "text-gray-400"
+                )}
+              >
                 {item.label}
               </span>
             </Link>

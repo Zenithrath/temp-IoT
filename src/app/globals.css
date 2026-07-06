@@ -2,26 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap');
+
 @layer base {
   :root {
-    /* Warm off-white/cream base - Taste Skill reference */
-    --background: 40 18% 96%;
-    --foreground: 24 10% 20%;
+    --background: 36 40% 95%;
+    --foreground: 20 10% 10%;
 
-    --card: 40 10% 99%;
-    --card-foreground: 24 10% 20%;
+    --card: 36 40% 97%;
+    --card-foreground: 20 10% 10%;
 
-    --popover: 40 10% 99%;
-    --popover-foreground: 24 10% 20%;
+    --popover: 36 40% 97%;
+    --popover-foreground: 20 10% 10%;
 
     --primary: 24 82% 58%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 12% 93%;
-    --secondary-foreground: 24 15% 20%;
+    --secondary: 36 30% 92%;
+    --secondary-foreground: 20 10% 20%;
 
-    --muted: 30 12% 93%;
-    --muted-foreground: 24 10% 42%;
+    --muted: 36 30% 92%;
+    --muted-foreground: 20 5% 45%;
 
     --accent: 24 82% 58%;
     --accent-foreground: 0 0% 100%;
@@ -29,11 +30,11 @@
     --destructive: 0 60% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 30 15% 90%;
-    --input: 30 15% 90%;
+    --border: 36 20% 88%;
+    --input: 36 20% 88%;
     --ring: 24 82% 58%;
 
-    --radius: 1rem;
+    --radius: 0.375rem;
   }
 }
 
@@ -43,17 +44,55 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Orbitron', sans-serif;
   }
 }
 
 @layer utilities {
   .shadow-card {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    box-shadow: -4px -4px 12px 0 rgba(255, 255, 255, 0.7), 4px 4px 10px 0 rgba(217, 210, 200, 0.45);
   }
   .shadow-card-hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+    box-shadow: -6px -6px 16px 0 rgba(255, 255, 255, 0.8), 6px 6px 14px 0 rgba(217, 210, 200, 0.55);
   }
   .shadow-card-elevated {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: -8px -8px 20px 0 rgba(255, 255, 255, 0.85), 8px 8px 20px 0 rgba(217, 210, 200, 0.6);
+  }
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .glass-light {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .glow-orange {
+    box-shadow: 0 0 15px rgba(232, 119, 46, 0.3), 0 0 30px rgba(232, 119, 46, 0.1);
+  }
+  .glow-orange-strong {
+    box-shadow: 0 0 20px rgba(232, 119, 46, 0.5), 0 0 40px rgba(232, 119, 46, 0.2);
+  }
+  .glow-orange-subtle {
+    box-shadow: 0 0 10px rgba(232, 119, 46, 0.15);
+  }
+  .neumorphic-inset {
+    box-shadow: inset 4px 4px 10px 0 rgba(217, 210, 200, 0.5), inset -4px -4px 10px 0 rgba(255, 255, 255, 0.7);
+  }
+  .neumorphic-outset {
+    box-shadow: -4px -4px 12px 0 rgba(255, 255, 255, 0.7), 4px 4px 10px 0 rgba(217, 210, 200, 0.45);
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-link:hover,
+  .nav-link:focus,
+  .nav-link:active {
+    background-color: rgba(255, 255, 255, 0.15);
   }
 }

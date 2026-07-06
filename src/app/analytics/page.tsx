@@ -12,26 +12,31 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { TrendingUp, TrendingDown, Calendar, ArrowUpRight } from "lucide-react";
-import { useAnalytics } from "@/hooks/useAnalytics";
+import { useAnalytics, TimeRange } from "@/hooks/useAnalytics";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip);
 
-type Period = "weekly" | "biweekly" | "monthly";
+const TIME_RANGES: { value: TimeRange; label: string }[] = [
+  { value: "1w", label: "1 Week" },
+  { value: "2w", label: "2 Weeks" },
+  { value: "1m", label: "1 Month" },
+  { value: "1y", label: "1 Year" },
+];
 
 export default function AnalyticsPage() {
-  const [period, setPeriod] = useState<Period>("weekly");
-  const { data: analyticsData, loaded, error } = useAnalytics();
-  const data = analyticsData[period];
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<TimeRange>("1w");
+  const { data, devices, loaded, error } = useAnalytics(selectedDevice, timeRange);
 
   const tempChartData = {
     labels: data.labels,
     datasets: [
       {
         data: data.temp,
-        borderColor: "#e8772e", // Vibrant orange
+        borderColor: "#e8772e",
         backgroundColor: "rgba(232, 119, 46, 0.04)",
         borderWidth: 2.5,
-        pointRadius: 4,
+        pointRadius: data.labels.length > 100 ? 0 : 4,
         pointBackgroundColor: "#e8772e",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
@@ -46,10 +51,10 @@ export default function AnalyticsPage() {
     datasets: [
       {
         data: data.hum,
-        borderColor: "#475569", // Muted slate gray/blue
+        borderColor: "#475569",
         backgroundColor: "rgba(71, 85, 105, 0.04)",
         borderWidth: 2.5,
-        pointRadius: 4,
+        pointRadius: data.labels.length > 100 ? 0 : 4,
         pointBackgroundColor: "#475569",
         pointBorderColor: "#fff",
         pointBorderWidth: 2,
@@ -66,18 +71,22 @@ export default function AnalyticsPage() {
       mode: "index" as const,
       intersect: false,
     },
-    plugins: { 
-      tooltip: { enabled: true }, 
-      legend: { display: false } 
+    plugins: {
+      tooltip: { enabled: true },
+      legend: { display: false },
     },
     scales: {
-      x: { 
-        grid: { display: false }, 
-        ticks: { color: "#8a857c", font: { size: 11, weight: "bold" as const } } 
+      x: {
+        grid: { display: false },
+        ticks: {
+          color: "#8a857c",
+          font: { size: 11, weight: "bold" as const },
+          maxTicksLimit: 12,
+        },
       },
-      y: { 
-        grid: { color: "#f5f0e8" }, 
-        ticks: { color: "#8a857c", font: { size: 11 } } 
+      y: {
+        grid: { color: "#f5f0e8" },
+        ticks: { color: "#8a857c", font: { size: 11 } },
       },
     },
   };
@@ -112,42 +121,64 @@ export default function AnalyticsPage() {
   return (
     <DashboardLayout>
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Analytics</h1>
           <p className="text-sm text-slate-500 mt-1">Telemetry analysis & weather history insights</p>
         </div>
 
-        {/* Period Selector styled like Lumos tabs */}
-        <div className="flex items-center gap-1 bg-background p-1.5 rounded-2xl border-none w-fit">
-          {(["weekly", "biweekly", "monthly"] as Period[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 ${
-                period === p
-                  ? "bg-primary text-white shadow-card border border-transparent"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              {p === "weekly" ? "Weekly" : p === "biweekly" ? "2 Weeks" : "Monthly"}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Device Selector */}
+          <select
+            value={selectedDevice ?? ""}
+            onChange={(e) => setSelectedDevice(e.target.value || null)}
+            className="px-4 py-2 text-xs font-bold rounded-md border border-gray-200/60 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <option value="">Select Device</option>
+            {devices.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Time Range Selector */}
+          <div className="flex items-center gap-1 bg-white p-1.5 rounded-md border border-gray-200/60">
+            {TIME_RANGES.map((tr) => (
+              <button
+                key={tr.value}
+                onClick={() => setTimeRange(tr.value)}
+                className={`px-4 py-2 text-xs font-bold rounded-md transition-all duration-200 ${
+                  timeRange === tr.value
+                    ? "bg-primary text-white shadow-card border border-transparent"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                {tr.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {!hasData ? (
-        <div className="bg-background rounded-2xl p-12 border border-gray-200/60 shadow-card text-center">
+      {!selectedDevice ? (
+        <div className="bg-background rounded-md p-12 border border-gray-200/60 shadow-card text-center">
+          <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+          <h3 className="font-bold text-slate-900 mb-2">Select a Device</h3>
+          <p className="text-sm text-slate-400">Choose a device from the dropdown above to view its analytics.</p>
+        </div>
+      ) : !hasData ? (
+        <div className="bg-background rounded-md p-12 border border-gray-200/60 shadow-card text-center">
           <Calendar className="h-12 w-12 text-slate-300 mx-auto mb-4" />
           <h3 className="font-bold text-slate-900 mb-2">No Data Yet</h3>
-          <p className="text-sm text-slate-400">Add some devices and start collecting telemetry data to see analytics.</p>
+          <p className="text-sm text-slate-400">No telemetry data found for this device in the selected time range.</p>
         </div>
       ) : (
       <>
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Avg Temp */}
-        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
+        <div className="bg-background rounded-md p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Avg Temperature</span>
           <div className="flex items-baseline gap-1.5 mt-1">
             <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{data.avgTemp}</span>
@@ -170,7 +201,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Avg Hum */}
-        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
+        <div className="bg-background rounded-md p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Avg Humidity</span>
           <div className="flex items-baseline gap-1.5 mt-1">
             <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{data.avgHum}</span>
@@ -193,7 +224,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Temp Range */}
-        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
+        <div className="bg-background rounded-md p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Temp Range</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums">{data.minTemp}</span>
@@ -205,7 +236,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Humidity Range */}
-        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
+        <div className="bg-background rounded-md p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Humidity Range</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-2xl font-bold text-slate-900 tabular-nums">{data.minHum}</span>
@@ -220,11 +251,11 @@ export default function AnalyticsPage() {
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Temperature chart */}
-        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
+        <div className="bg-background rounded-md p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-slate-900">Temperature History</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Continuous heat scale logging</p>
+              <p className="text-xs text-slate-400 mt-0.5">Per reading — {data.rawReadings.length} data points</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-primary" />
@@ -237,11 +268,11 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Humidity chart */}
-        <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
+        <div className="bg-background rounded-md p-6 border border-gray-200/60 shadow-card hover:shadow-card-hover transition-all duration-300">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-slate-900">Humidity History</h3>
-              <p className="text-xs text-slate-400 mt-0.5">Continuous moisture scale logging</p>
+              <p className="text-xs text-slate-400 mt-0.5">Per reading — {data.rawReadings.length} data points</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#475569]" />
@@ -254,12 +285,12 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-background rounded-2xl p-6 border border-gray-200/60 shadow-card">
+      {/* Data Table — Raw Readings */}
+      <div className="bg-background rounded-md p-6 border border-gray-200/60 shadow-card">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div>
             <h3 className="font-bold text-slate-900">Telemetry Data Log</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Detailed records per day/period</p>
+            <p className="text-xs text-slate-400 mt-0.5">{data.rawReadings.length} records — sorted by timestamp</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -272,28 +303,37 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </div>
-        
-        <div className="overflow-x-auto rounded-xl border border-gray-200/60">
+
+        <div className="overflow-x-auto rounded-md border border-gray-200/60 max-h-[400px] overflow-y-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-100 text-slate-600 font-semibold">
+            <thead className="bg-slate-100 text-slate-600 font-semibold sticky top-0">
               <tr>
-                <th className="px-4 py-3">Period / Date</th>
+                <th className="px-4 py-3">#</th>
+                <th className="px-4 py-3">Timestamp</th>
                 <th className="px-4 py-3">Temperature (°C)</th>
                 <th className="px-4 py-3">Humidity (%)</th>
                 <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200/50">
-              {data.labels.map((label, index) => (
-                <tr key={label} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 font-bold text-slate-800">{label}</td>
-                  <td className="px-4 py-3 tabular-nums">{data.temp[index].toFixed(1)}</td>
-                  <td className="px-4 py-3 tabular-nums">{data.hum[index]}</td>
+              {data.rawReadings.map((r, index) => (
+                <tr key={index} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-4 py-3 text-slate-400 font-mono text-xs">{index + 1}</td>
+                  <td className="px-4 py-3 font-bold text-slate-800 tabular-nums">
+                    {new Date(r.created_at).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td className="px-4 py-3 tabular-nums">{r.temperature}</td>
+                  <td className="px-4 py-3 tabular-nums">{r.humidity}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                      data.temp[index] > 30 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
+                      r.temperature > 30 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
                     }`}>
-                      {data.temp[index] > 30 ? 'Warning' : 'Optimal'}
+                      {r.temperature > 30 ? 'Warning' : 'Optimal'}
                     </span>
                   </td>
                 </tr>

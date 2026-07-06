@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss"
 
-const config = {
+const config: Config = {
   darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
@@ -58,11 +58,23 @@ const config = {
           200: "#ede5d8",
           300: "#ddd0be",
         },
+        dark: {
+          bg: "#0d0d0d",
+          surface: "#1a1a1a",
+          elevated: "#242424",
+          border: "#2e2e2e",
+          muted: "#3a3a3a",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        "glow-sm": "0 0 10px rgba(232, 119, 46, 0.15)",
+        "glow-md": "0 0 15px rgba(232, 119, 46, 0.3), 0 0 30px rgba(232, 119, 46, 0.1)",
+        "glow-lg": "0 0 20px rgba(232, 119, 46, 0.5), 0 0 40px rgba(232, 119, 46, 0.2)",
       },
       keyframes: {
         "accordion-down": {
@@ -73,14 +85,19 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.6" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config
+}
 
 export default config

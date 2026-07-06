@@ -20,19 +20,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 const FormSchema = z.object({
-  entityType: z.string({
-    required_error: "entityType is required",
-    invalid_type_error: "entityType must be a string",
+  thingsboard_device_id: z.string({
+    required_error: "Device ID is required",
+    invalid_type_error: "Device ID must be a string",
   }),
-  entityId: z.string({
-    required_error: "entityId is required",
-    invalid_type_error: "entityId must be a string",
-  }),
-  keys: z.string({
-    invalid_type_error: "keys must be a string",
-  }),
-  useStrictDataTypes: z.string({
-    invalid_type_error: "keys must be a string",
+  thingsboard_access_token: z.string({
+    required_error: "Access token is required",
+    invalid_type_error: "Access token must be a string",
   }),
 });
 
@@ -42,8 +36,8 @@ export const SettingForm = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      keys: "",
-      useStrictDataTypes: "false",
+      thingsboard_device_id: "",
+      thingsboard_access_token: "",
     },
   });
 
@@ -81,22 +75,21 @@ export const SettingForm = () => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full space-y-6 px-3 md:px-0">
         <FormField
           control={form.control}
-          name="entityType"
+          name="thingsboard_device_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex justify-start">EntityType*</FormLabel>
+              <FormLabel className="flex justify-start">ThingsBoard Device ID*</FormLabel>
               <FormControl>
                 <Input
                   className="border-blue-950"
-                  placeholder="DEVICE"
+                  placeholder="a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                   {...field}
                   type="string"
                   onChange={field.onChange}
                 />
               </FormControl>
               <FormDescription>
-                A string value representing the entity type. For example,
-                'DEVICE'
+                Internal Device UUID dari ThingsBoard. Buka device → Copy Device ID.
               </FormDescription>
               <FormMessage className="flex justify-start" />
             </FormItem>
@@ -104,22 +97,21 @@ export const SettingForm = () => {
         />
         <FormField
           control={form.control}
-          name="entityId"
+          name="thingsboard_access_token"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="flex justify-start">EntityId*</FormLabel>
+              <FormLabel className="flex justify-start">Access Token*</FormLabel>
               <FormControl>
                 <Input
                   className="border-blue-950"
-                  placeholder="784f394c-42b6-435a-983c-b7beff2784f9"
+                  placeholder="Copy Access Token dari device ThingsBoard"
                   {...field}
                   type="string"
                   onChange={field.onChange}
                 />
               </FormControl>
               <FormDescription>
-                A string value representing the entity id. For example,
-                '784f394c-42b6-435a-983c-b7beff2784f9'
+                Device access token dari ThingsBoard, dipakai ESP32 untuk autentikasi MQTT.
               </FormDescription>
               <FormMessage className="flex justify-start" />
             </FormItem>

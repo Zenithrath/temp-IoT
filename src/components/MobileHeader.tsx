@@ -18,21 +18,19 @@ export function MobileHeader() {
   const title = pageTitles[pathname] || "Dashboard";
 
   return (
-    <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-40">
+    <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-cream-50 border-b border-cream-200/60 sticky top-0 z-40">
       <Link href="/" className="flex items-center gap-2.5">
-        <div className="rounded-lg overflow-hidden flex items-center justify-center h-7 w-7 shadow-sm">
-          <Image src="/arka.jpg" alt="Arka Logo" width={28} height={28} className="object-cover" />
-        </div>
+        <Image src="/arka.jpg" alt="Arka Logo" width={36} height={36} className="object-cover shrink-0" />
         <div className="flex flex-col">
-          <span className="text-xs font-bold text-slate-900 tracking-tight leading-none">Arkananta MT</span>
+          <span className="text-xs font-bold text-gray-900 tracking-tight leading-none">Arkananta MT</span>
           <span className="text-[9px] font-semibold text-primary mt-0.5">{title}</span>
         </div>
       </Link>
 
       <form action={signOut}>
-        <button 
+        <button
           type="submit"
-          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+          className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
           title="Sign Out"
         >
           <LogOut className="h-4 w-4" />

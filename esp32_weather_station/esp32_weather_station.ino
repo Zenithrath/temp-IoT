@@ -1,53 +1,48 @@
-/*
- * Weather Station - ESP32 + DHT11
- * 
- * Library yang perlu diinstall (Arduino IDE → Library Manager):
- *   - DHT sensor library (by Adafruit)
- *   - Adafruit Unified Sensor
- * 
- * Wiring DHT11 ke ESP32:
- *   VCC  → 3.3V
- *   GND  → GND
- *   DATA → GPIO4 (bisa diganti di bawah)
- */
-
 #include <WiFi.h>
-#include <HTTPClient.h>
+#include <PubSubClient.h>
 #include <DHT.h>
 
 // ============================================
-// KONFIGURASI - ISI BAGIAN INI SAJA
+// KONFIGURASI
 // ============================================
-const char* WIFI_SSID = "HQ_Mesh";        // ← ganti
-const char* WIFI_PASS = "##ARKA##4321##";     // ← ganti
-const char* API_URL   = "https://arka-mt.vercel.app/api/device/";  // ← trailing slash WAJIB
-const char* API_KEY   = "apiku_gacor";       // ← samakan dengan IOT_API_KEY di Vercel
-const char* DEVICE_ID = "a09c1032-b196-40f1-8e52-066035b09dc1";           // ← dari Settings
+const char* WIFI_SSID = "HQ_Mesh";
+const char* WIFI_PASS = "##ARKA##4321##";
 
-#define DHTPIN 23        // GPIO pin DHT11 DATA
+
+const char* TB_SERVER = "172.22.64.1";   // ← IP laptop (jalankan ipconfig)
+const int   TB_PORT   = 1883;
+const char* TB_TOKEN  = "HBrD0pYsbErz9uFdsq93";  // ← dari ThingsBoard
+
+#define DHTPIN 23
 #define DHTTYPE DHT11
-#define SEND_INTERVAL 5000  // interval kirim data (ms) = 5 detik
+#define SEND_INTERVAL 5000
 // ============================================
 
 DHT dht(DHTPIN, DHTTYPE);
+WiFiClient wifiClient;
+PubSubClient mqtt(wifiClient);
 unsigned long lastSend = 0;
 
 void setup() {
   Serial.begin(115200);
   Serial.println();
-  Serial.println("=== Weather Station ESP32 ===");
+  Serial.println("=== Weather Station ESP32 → ThingsBoard MQTT ===");
   dht.begin();
   connectWiFi();
+  mqtt.setServer(TB_SERVER, TB_PORT);
 }
 
 void loop() {
-  // Reconnect jika WiFi putus
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi disconnected, reconnecting...");
+    Serial.println("[WiFi] Disconnected, reconnecting...");
     connectWiFi();
   }
 
-  // Kirim data sesuai interval
+  if (!mqtt.connected()) {
+    reconnectMQTT();
+  }
+  mqtt.loop();
+
   unsigned long now = millis();
   if (now - lastSend >= SEND_INTERVAL) {
     lastSend = now;
@@ -56,22 +51,29 @@ void loop() {
     float humidity = dht.readHumidity();
 
     if (isnan(temperature) || isnan(humidity)) {
-      Serial.println("[ERROR] Gagal baca DHT11, skip...");
+      Serial.println("[DHT11] Gagal baca sensor, skip...");
       return;
     }
 
-    Serial.print("[DHT11] Temp: ");
-    Serial.print(temperature, 1);
-    Serial.print("°C  Hum: ");
-    Serial.print(humidity, 1);
-    Serial.println("%");
+    Serial.printf("[DHT11] Temp: %.1f°C  Hum: %.1f%%\n", temperature, humidity);
 
-    sendToServer(temperature, humidity);
+    String payload = "{\"temperature\":";
+    payload += String(temperature, 1);
+    payload += ",\"humidity\":";
+    payload += String(humidity, 1);
+    payload += "}";
+
+    // Topic: v1/devices/me/telemetry (literal "me")
+    if (mqtt.publish("v1/devices/me/telemetry", payload.c_str())) {
+      Serial.println("[MQTT] Sent: " + payload);
+    } else {
+      Serial.println("[MQTT] Gagal publish");
+    }
   }
 }
 
 void connectWiFi() {
-  Serial.print("Connecting to WiFi: ");
+  Serial.print("[WiFi] Connecting to ");
   Serial.println(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
@@ -84,47 +86,25 @@ void connectWiFi() {
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println();
-    Serial.print("WiFi connected! IP: ");
+    Serial.print("[WiFi] Connected! IP: ");
     Serial.println(WiFi.localIP());
   } else {
     Serial.println();
-    Serial.println("[ERROR] WiFi connection failed, will retry...");
+    Serial.println("[WiFi] Gagal konek, akan retry...");
   }
 }
 
-void sendToServer(float temp, float hum) {
-  HTTPClient http;
-  http.begin(API_URL);
-  http.addHeader("Content-Type", "application/json");
-  http.addHeader("x-api-key", API_KEY);
-  http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
-
-  // Build JSON manually (tanpa ArduinoJson library)
-  String json = "{";
-  json += "\"device_id\":\"" + String(DEVICE_ID) + "\",";
-  json += "\"temperature\":" + String(temp, 1) + ",";
-  json += "\"humidity\":" + String(hum, 1);
-  json += "}";
-
-  Serial.print("[HTTP] POST ");
-  Serial.println(API_URL);
-
-  int httpCode = http.POST(json);
-
-  if (httpCode > 0) {
-    String response = http.getString();
-    if (httpCode == 200) {
-      Serial.println("[HTTP] OK: " + response);
+void reconnectMQTT() {
+  while (!mqtt.connected()) {
+    Serial.print("[MQTT] Connecting to ThingsBoard...");
+    // Token sebagai MQTT username, password = NULL
+    if (mqtt.connect("ESP32Weather", TB_TOKEN, NULL)) {
+      Serial.println(" OK");
     } else {
-      Serial.print("[HTTP] Error ");
-      Serial.print(httpCode);
-      Serial.print(": ");
-      Serial.println(response);
+      Serial.print(" Gagal (rc=");
+      Serial.print(mqtt.state());
+      Serial.println("), retry in 5s...");
+      delay(5000);
     }
-  } else {
-    Serial.print("[HTTP] Failed: ");
-    Serial.println(http.errorToString(httpCode));
   }
-
-  http.end();
 }

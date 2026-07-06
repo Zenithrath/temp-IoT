@@ -24,7 +24,7 @@ export default function SplineComponent() {
 
   return (
     <div 
-      className="w-full h-full cursor-grab active:cursor-grabbing rounded-2xl overflow-hidden"
+      className="w-full h-full cursor-grab active:cursor-grabbing rounded-md overflow-hidden"
       onWheel={(e) => {
         e.preventDefault();
         e.stopPropagation();

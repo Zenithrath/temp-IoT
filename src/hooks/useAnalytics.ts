@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import createSupabaseClientClient from '@/lib/supabase/client';
 
-type Period = 'weekly' | 'biweekly' | 'monthly';
+export type TimeRange = '1w' | '2w' | '1m' | '1y';
 
 export interface AnalyticsData {
   labels: string[];
@@ -15,147 +15,112 @@ export interface AnalyticsData {
   maxHum: number;
   tempChange: number;
   humChange: number;
+  rawReadings: RawReading[];
 }
 
-interface RawReading {
+export interface RawReading {
+  created_at: string;
   temperature: number;
   humidity: number;
-  created_at: string;
 }
 
-function startOfDay(d: Date): Date {
-  const r = new Date(d);
-  r.setHours(0, 0, 0, 0);
-  return r;
+function getRangeDays(timeRange: TimeRange): number {
+  switch (timeRange) {
+    case '1w': return 7;
+    case '2w': return 14;
+    case '1m': return 30;
+    case '1y': return 365;
+  }
 }
 
-function startOfWeek(d: Date): Date {
-  const r = startOfDay(d);
-  const day = r.getDay();
-  r.setDate(r.getDate() - day);
-  return r;
+function formatLabel(d: Date, timeRange: TimeRange): string {
+  if (timeRange === '1y') {
+    return d.toLocaleDateString('en-US', { month: 'short' });
+  }
+  if (timeRange === '1m') {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-function formatDate(d: Date): string {
-  return d.toLocaleDateString('en-US', { weekday: 'short' });
+function computeStats(values: number[]) {
+  if (values.length === 0) {
+    return { avg: 0, min: 0, max: 0 };
+  }
+  const sum = values.reduce((a, b) => a + b, 0);
+  return {
+    avg: parseFloat((sum / values.length).toFixed(1)),
+    min: parseFloat(Math.min(...values).toFixed(1)),
+    max: parseFloat(Math.max(...values).toFixed(1)),
+  };
 }
 
-function formatWeekLabel(d: Date): string {
-  return `W${Math.ceil((d.getDate()) / 7)}`;
+function computeChange(current: number, previous: number): number {
+  if (previous === 0) return 0;
+  return parseFloat((((current - previous) / previous) * 100).toFixed(1));
 }
 
-function aggregateByDay(readings: RawReading[]): AnalyticsData {
-  const now = new Date();
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-  sevenDaysAgo.setHours(0, 0, 0, 0);
-
-  const dayMap = new Map<string, { temps: number[]; hums: number[] }>();
-
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sevenDaysAgo);
-    d.setDate(d.getDate() + i);
-    dayMap.set(formatDate(d), { temps: [], hums: [] });
+function buildAnalytics(
+  readings: RawReading[],
+  timeRange: TimeRange,
+): AnalyticsData {
+  if (readings.length === 0) {
+    return {
+      labels: [], temp: [], hum: [],
+      avgTemp: 0, avgHum: 0,
+      minTemp: 0, maxTemp: 0, minHum: 0, maxHum: 0,
+      tempChange: 0, humChange: 0,
+      rawReadings: [],
+    };
   }
 
-  for (const r of readings) {
-    const rd = new Date(r.created_at);
-    if (rd < sevenDaysAgo) continue;
-    const key = formatDate(rd);
-    const entry = dayMap.get(key);
-    if (entry) {
-      entry.temps.push(r.temperature);
-      entry.hums.push(r.humidity);
-    }
-  }
+  const labels = readings.map((r) => formatLabel(new Date(r.created_at), timeRange));
+  const temps = readings.map((r) => r.temperature);
+  const hums = readings.map((r) => r.humidity);
 
-  const labels: string[] = [];
-  const temp: number[] = [];
-  const hum: number[] = [];
+  const tempStats = computeStats(temps);
+  const humStats = computeStats(hums);
 
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sevenDaysAgo);
-    d.setDate(d.getDate() + i);
-    const key = formatDate(d);
-    labels.push(key);
-    const entry = dayMap.get(key)!;
-    temp.push(entry.temps.length ? parseFloat((entry.temps.reduce((a, b) => a + b, 0) / entry.temps.length).toFixed(1)) : 0);
-    hum.push(entry.hums.length ? Math.round(entry.hums.reduce((a, b) => a + b, 0) / entry.hums.length) : 0);
-  }
+  const rangeDays = getRangeDays(timeRange);
+  const midTs = readings[0] ? new Date(readings[0].created_at).getTime() + (new Date(readings[readings.length - 1].created_at).getTime() - new Date(readings[0].created_at).getTime()) / 2 : 0;
 
-  return buildAnalytics(labels, temp, hum);
+  const firstHalf = readings.filter((r) => new Date(r.created_at).getTime() <= midTs);
+  const secondHalf = readings.filter((r) => new Date(r.created_at).getTime() > midTs);
+
+  const firstHalfTempAvg = firstHalf.length ? firstHalf.reduce((a, r) => a + r.temperature, 0) / firstHalf.length : 0;
+  const secondHalfTempAvg = secondHalf.length ? secondHalf.reduce((a, r) => a + r.temperature, 0) / secondHalf.length : 0;
+  const firstHalfHumAvg = firstHalf.length ? firstHalf.reduce((a, r) => a + r.humidity, 0) / firstHalf.length : 0;
+  const secondHalfHumAvg = secondHalf.length ? secondHalf.reduce((a, r) => a + r.humidity, 0) / secondHalf.length : 0;
+
+  return {
+    labels,
+    temp: temps,
+    hum: hums,
+    avgTemp: tempStats.avg,
+    avgHum: humStats.avg,
+    minTemp: tempStats.min,
+    maxTemp: tempStats.max,
+    minHum: humStats.min,
+    maxHum: humStats.max,
+    tempChange: computeChange(secondHalfTempAvg, firstHalfTempAvg),
+    humChange: computeChange(secondHalfHumAvg, firstHalfHumAvg),
+    rawReadings: readings.map((r) => ({
+      created_at: r.created_at,
+      temperature: r.temperature,
+      humidity: r.humidity,
+    })),
+  };
 }
 
-function aggregateByWeek(readings: RawReading[], weekCount: number): AnalyticsData {
-  const now = new Date();
-  const weeks: { start: Date; temps: number[]; hums: number[] }[] = [];
-
-  for (let i = weekCount - 1; i >= 0; i--) {
-    const weekStart = startOfWeek(now);
-    weekStart.setDate(weekStart.getDate() - i * 7);
-    weeks.push({ start: weekStart, temps: [], hums: [] });
-  }
-
-  for (const r of readings) {
-    const rd = new Date(r.created_at);
-    const rWeekStart = startOfWeek(rd);
-
-    for (const w of weeks) {
-      if (rWeekStart.getTime() === w.start.getTime()) {
-        w.temps.push(r.temperature);
-        w.hums.push(r.humidity);
-        break;
-      }
-    }
-  }
-
-  const labels: string[] = [];
-  const temp: number[] = [];
-  const hum: number[] = [];
-
-  for (const w of weeks) {
-    labels.push(formatWeekLabel(w.start));
-    temp.push(w.temps.length ? parseFloat((w.temps.reduce((a, b) => a + b, 0) / w.temps.length).toFixed(1)) : 0);
-    hum.push(w.hums.length ? Math.round(w.hums.reduce((a, b) => a + b, 0) / w.hums.length) : 0);
-  }
-
-  return buildAnalytics(labels, temp, hum);
-}
-
-function buildAnalytics(labels: string[], temp: number[], hum: number[]): AnalyticsData {
-  const validTemps = temp.filter((t) => t > 0);
-  const validHums = hum.filter((h) => h > 0);
-
-  const avgTemp = validTemps.length ? parseFloat((validTemps.reduce((a, b) => a + b, 0) / validTemps.length).toFixed(1)) : 0;
-  const avgHum = validHums.length ? Math.round(validHums.reduce((a, b) => a + b, 0) / validHums.length) : 0;
-  const minTemp = validTemps.length ? Math.min(...validTemps) : 0;
-  const maxTemp = validTemps.length ? Math.max(...validTemps) : 0;
-  const minHum = validHums.length ? Math.min(...validHums) : 0;
-  const maxHum = validHums.length ? Math.max(...validHums) : 0;
-
-  const half = Math.floor(temp.length / 2);
-  const firstHalfTemp = temp.slice(0, half);
-  const secondHalfTemp = temp.slice(half);
-  const firstHalfHum = hum.slice(0, half);
-  const secondHalfHum = hum.slice(half);
-
-  const avgFirstTemp = firstHalfTemp.length ? firstHalfTemp.reduce((a, b) => a + b, 0) / firstHalfTemp.length : 0;
-  const avgSecondTemp = secondHalfTemp.length ? secondHalfTemp.reduce((a, b) => a + b, 0) / secondHalfTemp.length : 0;
-  const avgFirstHum = firstHalfHum.length ? firstHalfHum.reduce((a, b) => a + b, 0) / firstHalfHum.length : 0;
-  const avgSecondHum = secondHalfHum.length ? secondHalfHum.reduce((a, b) => a + b, 0) / secondHalfHum.length : 0;
-
-  const tempChange = avgFirstTemp ? parseFloat((((avgSecondTemp - avgFirstTemp) / avgFirstTemp) * 100).toFixed(1)) : 0;
-  const humChange = avgFirstHum ? parseFloat((((avgSecondHum - avgFirstHum) / avgFirstHum) * 100).toFixed(1)) : 0;
-
-  return { labels, temp, hum, avgTemp, avgHum, minTemp, maxTemp, minHum, maxHum, tempChange, humChange };
-}
-
-export function useAnalytics() {
-  const [data, setData] = useState<Record<Period, AnalyticsData>>({
-    weekly: { labels: [], temp: [], hum: [], avgTemp: 0, avgHum: 0, minTemp: 0, maxTemp: 0, minHum: 0, maxHum: 0, tempChange: 0, humChange: 0 },
-    biweekly: { labels: [], temp: [], hum: [], avgTemp: 0, avgHum: 0, minTemp: 0, maxTemp: 0, minHum: 0, maxHum: 0, tempChange: 0, humChange: 0 },
-    monthly: { labels: [], temp: [], hum: [], avgTemp: 0, avgHum: 0, minTemp: 0, maxTemp: 0, minHum: 0, maxHum: 0, tempChange: 0, humChange: 0 },
+export function useAnalytics(deviceId: string | null, timeRange: TimeRange) {
+  const [data, setData] = useState<AnalyticsData>({
+    labels: [], temp: [], hum: [],
+    avgTemp: 0, avgHum: 0,
+    minTemp: 0, maxTemp: 0, minHum: 0, maxHum: 0,
+    tempChange: 0, humChange: 0,
+    rawReadings: [],
   });
+  const [devices, setDevices] = useState<{ id: string; name: string }[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -170,23 +135,26 @@ export function useAnalytics() {
 
     const { data: userDevices } = await supabase
       .from('devices')
-      .select('id')
-      .eq('user_id', user.id);
+      .select('id, name')
+      .eq('user_id', user.id)
+      .order('name');
 
-    const deviceIds = userDevices?.map((d) => d.id) ?? [];
-    if (deviceIds.length === 0) {
+    setDevices(userDevices ?? []);
+
+    if (!deviceId) {
       setLoaded(true);
       return;
     }
 
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+    const days = getRangeDays(timeRange);
+    const since = new Date();
+    since.setDate(since.getDate() - days);
 
     const { data: rows, error: err } = await supabase
       .from('device_history')
       .select('temperature, humidity, created_at')
-      .in('device_id', deviceIds)
-      .gte('created_at', twoMonthsAgo.toISOString())
+      .eq('device_id', deviceId)
+      .gte('created_at', since.toISOString())
       .order('created_at', { ascending: true });
 
     if (err) {
@@ -197,24 +165,16 @@ export function useAnalytics() {
     }
 
     const readings: RawReading[] = rows ?? [];
-
-    setData({
-      weekly: aggregateByDay(readings),
-      biweekly: aggregateByWeek(readings, 14),
-      monthly: aggregateByWeek(readings, 4),
-    });
+    setData(buildAnalytics(readings, timeRange));
     setLoaded(true);
-  }, []);
+  }, [deviceId, timeRange]);
 
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  // Polling fallback: refresh analytics every 5 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchAnalytics();
-    }, 5000);
+    const interval = setInterval(fetchAnalytics, 10000);
     return () => clearInterval(interval);
   }, [fetchAnalytics]);
 
@@ -237,5 +197,5 @@ export function useAnalytics() {
     };
   }, [fetchAnalytics]);
 
-  return { data, loaded, error };
+  return { data, devices, loaded, error };
 }

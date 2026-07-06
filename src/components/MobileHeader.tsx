@@ -20,7 +20,7 @@ export function MobileHeader() {
   return (
     <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-cream-50 border-b border-cream-200/60 sticky top-0 z-40">
       <Link href="/" className="flex items-center gap-2.5">
-        <Image src="/arka.jpg" alt="Arka Logo" width={36} height={36} className="object-cover shrink-0" />
+        <Image src="/ARKA.jpg" alt="Arka Logo" width={36} height={36} className="object-cover shrink-0" />
         <div className="flex flex-col">
           <span className="text-xs font-bold text-gray-900 tracking-tight leading-none">Arkananta MT</span>
           <span className="text-[9px] font-semibold text-primary mt-0.5">{title}</span>

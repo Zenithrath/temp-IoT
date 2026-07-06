@@ -126,7 +126,7 @@ export function useDevices() {
   }, [fetchDevices]);
 
   useEffect(() => {
-    const interval = setInterval(fetchDevices, 5000);
+    const interval = setInterval(fetchDevices, 3000);
     return () => clearInterval(interval);
   }, [fetchDevices]);
 
@@ -140,7 +140,7 @@ export function useDevices() {
       }
     };
     sync();
-    const interval = setInterval(sync, 60000);
+    const interval = setInterval(sync, 30000);
     return () => clearInterval(interval);
   }, [fetchDevices]);
 

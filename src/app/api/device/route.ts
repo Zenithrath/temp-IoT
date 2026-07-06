@@ -8,17 +8,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
   }
 
-  let body: { device_id?: string; temperature?: number; humidity?: number };
+  let body: { device_id?: string; access_token?: string; temperature?: number; humidity?: number };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { device_id, temperature, humidity } = body;
+  const { device_id, access_token, temperature, humidity } = body;
 
-  if (!device_id || temperature == null || humidity == null) {
-    return NextResponse.json({ error: 'Missing required fields: device_id, temperature, humidity' }, { status: 400 });
+  if (temperature == null || humidity == null) {
+    return NextResponse.json({ error: 'Missing required fields: temperature, humidity' }, { status: 400 });
   }
 
   if (typeof temperature !== 'number' || typeof humidity !== 'number') {
@@ -27,9 +27,29 @@ export async function POST(request: NextRequest) {
 
   const supabase = createSupabaseServiceClient();
 
+  let resolvedDeviceId = device_id;
+
+  // Look up device by access_token if no device_id provided
+  if (!resolvedDeviceId && access_token) {
+    const { data: device } = await supabase
+      .from('devices')
+      .select('id')
+      .eq('thingsboard_access_token', access_token)
+      .single();
+
+    if (!device) {
+      return NextResponse.json({ error: 'Device not found for this access_token' }, { status: 404 });
+    }
+    resolvedDeviceId = device.id;
+  }
+
+  if (!resolvedDeviceId) {
+    return NextResponse.json({ error: 'Missing device_id or access_token' }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from('device_history')
-    .insert({ device_id, temperature, humidity })
+    .insert({ device_id: resolvedDeviceId, temperature, humidity })
     .select('id')
     .single();
 

@@ -319,8 +319,8 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-md border border-gray-200/60 overflow-hidden">
-          <table className="w-full text-left text-sm">
+        <div className="rounded-md border border-gray-200/60 overflow-x-auto">
+          <table className="w-full text-left text-sm min-w-[600px]">
             <thead className="bg-slate-100 text-slate-600 font-semibold">
               <tr>
                 <th className="px-4 py-3">#</th>
